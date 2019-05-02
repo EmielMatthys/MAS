@@ -1,0 +1,50 @@
+# Project: overview
+## Problem: PDP
+### Environment:
+* Classical PDP environment: 2D delivery space
+* Package agents + delivery agents
+* Dynamic: see below
+
+### AGV's:
+* Two main agents: package + delivery
+* Delegate MASs: to implement effective delivery tactics
+
+### Constraints and dynamism:
+* Communication constraint: eg due to large scale
+* Time constraint: deliver packages within time window
+* Dynamism: paths can become unavailable, new ones can be added.
+* At most 5 packages simultaneously.
+
+--------------------------
+### Objectives
+* Show that delegate mas performs better than standard BDI in certain environment settings (when considering time constraints)
+
+### Research questions:
+* How do delegate MAS and non-delegate MAS implementations compare in an increasing map scale.
+* How do delegate MAS and non-delegate MAS implementations compare in a dynamic environment? (nodes disappearing etc)
+* How do delegate MAS and non-delegate MAS implementations compare when communication range decreases.
+
+### Hypothesis:
+* Delegate MAS implementation will perform better in terms of lateness when map scale increases.
+* Delegate MAS implementation will perform better in terms of lateness when dynamism increases.
+* Delegate MAS will perform better in terms of lateness.
+
+### Solution strategies
+#### Non-delegate MAS implementation:
+* Based on Taxi example in RinSim
+* Packages are detected by trucks when they are within a short range
+* If the truck has space left, it attempts to pick up the package in range.
+* Else it will attempt to drive to the delivery location of package with shortest time left.
+* Alternative: Only one package per truck and deliver instantly --> delegated mas implementation also?
+
+#### Delegate MAS implementation:
+* Again based on Taxi example but with extensions
+* 3 delegated MASs for feasibility, exploration and intention.
+* Communication constraint: #hops? not clear where to constrain...
+* How often are ants sent out?
+* Completely virtual? Or simulated physically?
+
+### Experimental scenario's
+* Use two maps in RinSim: one bigger than the other. More packages in larger map? More trucks? (linearly?) Compare implementations based on lateness when number of trucks increases?
+* Use one map. Randomly remove nodes (that don't contain agents) and compare average lateness between implementations.
+* Use one map. Gradually decrease communication range? --> How to implement in Delegated MAS?
