@@ -27,24 +27,29 @@
 ### Hypothesis:
 * Delegate MAS implementation will perform better in terms of lateness when map scale increases.
 * Delegate MAS implementation will perform better in terms of lateness when dynamism increases.
-* Delegate MAS will perform better in terms of lateness.
+* Delegate MAS will perform better in terms of lateness when communication range decreases.
 
 ### Solution strategies
+* One-way streets? Parallel in both directions? Alternatively: local deadlock detection and resolution...
+* Requests arrive dynamically
+* Packets and trucks have a 'communication ring', which forms the comm. constraint.
+* Full map knowledge: only simple implementation or also Delegate MAS?
+
 #### Non-delegate MAS implementation:
 * Based on Taxi example in RinSim
 * Packages are detected by trucks when they are within a short range
-* If the truck has space left, it attempts to pick up the package in range.
+* If the truck has space left, it attempts to pick up the package in range. Alternatively: check if enough time for pickup...
 * Else it will attempt to drive to the delivery location of package with shortest time left.
 * Alternative: Only one package per truck and deliver instantly --> delegated mas implementation also?
 
 #### Delegate MAS implementation:
 * Again based on Taxi example but with extensions
-* 3 delegated MASs for feasibility, exploration and intention.
-* Communication constraint: #hops? not clear where to constrain...
+* 3 (?) delegated MASs for feasibility, exploration and intention.
+* Communication constraint: no specific constraints --> use ants (#hops...)
 * How often are ants sent out?
-* Completely virtual? Or simulated physically?
+* Draw ants on-screen
 
 ### Experimental scenario's
-* Use two maps in RinSim: one bigger than the other. More packages in larger map? More trucks? (linearly?) Compare implementations based on lateness when number of trucks increases?
+* Use two maps: one bigger than the other. More packages in larger map? More trucks? (linearly?) Compare implementations based on lateness when number of trucks increases?
 * Use one map. Randomly remove nodes (that don't contain agents) and compare average lateness between implementations.
 * Use one map. Gradually decrease communication range? --> How to implement in Delegated MAS?
