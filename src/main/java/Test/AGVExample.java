@@ -2,6 +2,9 @@ package Test;
 
 import com.github.rinde.rinsim.core.Simulator;
 import com.github.rinde.rinsim.core.model.comm.CommModel;
+import com.github.rinde.rinsim.core.model.pdp.DefaultPDPModel;
+import com.github.rinde.rinsim.core.model.road.DynamicGraphRoadModel;
+import com.github.rinde.rinsim.core.model.road.RoadModel;
 import com.github.rinde.rinsim.core.model.road.RoadModelBuilders;
 import com.github.rinde.rinsim.geom.*;
 import com.github.rinde.rinsim.ui.View;
@@ -65,11 +68,15 @@ public class AGVExample {
                                 .withDistanceUnit(SI.METER)
                                 .withVehicleLength(VEHICLE_LENGTH))
                 .addModel(viewBuilder)
+                .addModel(DefaultPDPModel.builder())
                 .addModel(CommModel.builder())
                 .build();
 
+
+        RoadModel roadModel = sim.getModelProvider().getModel(DynamicGraphRoadModel.class);
+
         for (int i = 0; i < NUM_AGVS; i++) {
-            sim.register(new SimpleAgent(sim.getRandomGenerator()));
+            sim.register(new SimpleAgent(sim.getRandomGenerator(), roadModel.getRandomPosition(sim.getRandomGenerator())));
         }
 
         sim.start();

@@ -3,6 +3,8 @@ package Test;
 import com.github.rinde.rinsim.core.model.comm.CommDevice;
 import com.github.rinde.rinsim.core.model.comm.CommDeviceBuilder;
 import com.github.rinde.rinsim.core.model.comm.CommUser;
+import com.github.rinde.rinsim.core.model.pdp.Vehicle;
+import com.github.rinde.rinsim.core.model.pdp.VehicleDTO;
 import com.github.rinde.rinsim.core.model.road.CollisionGraphRoadModelImpl;
 import com.github.rinde.rinsim.core.model.road.MovingRoadUser;
 import com.github.rinde.rinsim.core.model.road.RoadModel;
@@ -16,34 +18,28 @@ import org.apache.commons.math3.random.RandomGenerator;
 import java.util.LinkedList;
 import java.util.Queue;
 
-public class SimpleAgent implements TickListener, MovingRoadUser, CommUser {
+public class SimpleAgent extends Vehicle implements TickListener, MovingRoadUser, CommUser {
 
+    private static final int VEHICLE_CAPACITY = 1;
+    private static final double VEHICLE_SPEED = 10;
     private final RandomGenerator rng;
-    private Optional<CollisionGraphRoadModelImpl> roadModel;
     private Optional<Point> destination;
     private Queue<Point> path;
     Optional<CommDevice> device;
 
     private final double range;
 
-    SimpleAgent(RandomGenerator rng) {
+    SimpleAgent(RandomGenerator rng, Point initialPosition) {
+        super(VehicleDTO.builder()
+                .startPosition(initialPosition)
+                .speed(VEHICLE_SPEED)
+                .capacity(VEHICLE_CAPACITY)
+                .build());
         this.rng = rng;
-        roadModel = Optional.absent();
         destination = Optional.absent();
         path = new LinkedList<>();
         this.range = 5;
         device = Optional.absent();
-    }
-
-    @Override
-    public void initRoadUser(RoadModel model) {
-        roadModel = Optional.of((CollisionGraphRoadModelImpl) model);
-        Point p;
-        do {
-            p = model.getRandomPosition(rng);
-        } while (roadModel.get().isOccupied(p));
-        roadModel.get().addObjectAt(this, p);
-
     }
 
     @Override
@@ -56,8 +52,8 @@ public class SimpleAgent implements TickListener, MovingRoadUser, CommUser {
 
         do{
             try {
-                destination = Optional.of(roadModel.get().getRandomPosition(rng));
-                path = new LinkedList<>(roadModel.get().getShortestPathTo(this,
+                destination = Optional.of(getRoadModel().getRandomPosition(rng));
+                path = new LinkedList<>(getRoadModel().getShortestPathTo(this,
                         destination.get()));
             }
             catch(PathNotFoundException e) {}
@@ -66,14 +62,14 @@ public class SimpleAgent implements TickListener, MovingRoadUser, CommUser {
     }
 
     @Override
-    public void tick(TimeLapse timeLapse) {
+    protected void tickImpl(TimeLapse time) {
         if (!destination.isPresent()) {
             nextDestination();
         }
 
-        roadModel.get().followPath(this, path, timeLapse);
+        getRoadModel().followPath(this, path, time);
 
-        if (roadModel.get().getPosition(this).equals(destination.get())) {
+        if (getRoadModel().getPosition(this).equals(destination.get())) {
             nextDestination();
         }
     }
@@ -83,10 +79,7 @@ public class SimpleAgent implements TickListener, MovingRoadUser, CommUser {
 
     @Override
     public Optional<Point> getPosition() {
-        if (roadModel.get().containsObject(this)) {
-            return Optional.of(roadModel.get().getPosition(this));
-        }
-        return Optional.absent();
+        return Optional.of(getRoadModel().getPosition(this));
     }
 
     @Override
