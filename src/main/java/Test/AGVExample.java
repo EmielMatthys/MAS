@@ -3,6 +3,7 @@ package Test;
 import com.github.rinde.rinsim.core.Simulator;
 import com.github.rinde.rinsim.core.model.comm.CommModel;
 import com.github.rinde.rinsim.core.model.pdp.DefaultPDPModel;
+import com.github.rinde.rinsim.core.model.pdp.Parcel;
 import com.github.rinde.rinsim.core.model.road.DynamicGraphRoadModel;
 import com.github.rinde.rinsim.core.model.road.RoadModel;
 import com.github.rinde.rinsim.core.model.road.RoadModelBuilders;
@@ -10,17 +11,19 @@ import com.github.rinde.rinsim.geom.*;
 import com.github.rinde.rinsim.ui.View;
 import com.github.rinde.rinsim.ui.renderers.AGVRenderer;
 import com.github.rinde.rinsim.ui.renderers.CommRenderer;
+import com.github.rinde.rinsim.ui.renderers.RoadUserRenderer;
 import com.github.rinde.rinsim.ui.renderers.WarehouseRenderer;
 import com.google.common.collect.ImmutableTable;
-import com.google.common.collect.Lists;
 import com.google.common.collect.Table;
+import org.apache.commons.math3.random.RandomGenerator;
 
 import javax.measure.unit.SI;
 import java.util.Map;
 
-import static com.google.common.collect.Lists.newArrayList;
-
 public class AGVExample {
+
+    private static final long SERVICE_DURATION = 60000;
+    private static final int MAX_CAPACITY = 3;
 
     private static final double VEHICLE_LENGTH = 2d;
     private static final int NUM_AGVS = 1;
@@ -55,10 +58,17 @@ public class AGVExample {
                     .withAutoClose()
                     .withSimulatorEndTime(TEST_END_TIME)
                     .withTitleAppendix("TESTING")
-                    .withSpeedUp(TEST_SPEED_UP);
+                    .withSpeedUp(TEST_SPEED_UP)
+                    .with(RoadUserRenderer.builder()
+                    .withImageAssociation(
+                            Package.class, "/graphics/perspective/deliverypackage2.png"));
         } else {
             viewBuilder =
-                    viewBuilder.withTitleAppendix("AGV example");
+                    viewBuilder.withTitleAppendix("AGV example")
+                            .with(RoadUserRenderer.builder()
+                                    .withImageAssociation(
+                                            Package.class, "/graphics/perspective/deliverypackage2.png"))
+            ;
         }
 
         final Simulator sim = Simulator.builder()
@@ -78,6 +88,13 @@ public class AGVExample {
         for (int i = 0; i < NUM_AGVS; i++) {
             sim.register(new SimpleAgent(sim.getRandomGenerator(), roadModel.getRandomPosition(sim.getRandomGenerator())));
         }
+        RandomGenerator rng = sim.getRandomGenerator();
+        sim.register(new Package(
+                Parcel.builder(roadModel.getRandomPosition(rng),
+                        roadModel.getRandomPosition(rng))
+                        .serviceDuration(SERVICE_DURATION)
+                        .neededCapacity(1 + rng.nextInt(MAX_CAPACITY))
+                        .buildDTO()));
 
         sim.start();
     }
