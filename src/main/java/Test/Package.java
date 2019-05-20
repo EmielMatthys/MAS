@@ -68,7 +68,6 @@ public class Package extends Parcel implements CommUser, TickListener, RoadUser 
             ImmutableList<Message> messages = device.get().getUnreadMessages();
             if(messages.size() == 0){
                 state = PackageState.BROADCAST; //TODO range increase?
-                LOGGER.debug("No response, broadcasting again");
                 return;
             }
 

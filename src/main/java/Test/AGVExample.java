@@ -7,6 +7,8 @@ import com.github.rinde.rinsim.core.model.pdp.Parcel;
 import com.github.rinde.rinsim.core.model.road.DynamicGraphRoadModel;
 import com.github.rinde.rinsim.core.model.road.RoadModel;
 import com.github.rinde.rinsim.core.model.road.RoadModelBuilders;
+import com.github.rinde.rinsim.core.model.time.TickListener;
+import com.github.rinde.rinsim.core.model.time.TimeLapse;
 import com.github.rinde.rinsim.geom.*;
 import com.github.rinde.rinsim.ui.View;
 import com.github.rinde.rinsim.ui.renderers.AGVRenderer;
@@ -16,6 +18,7 @@ import com.github.rinde.rinsim.ui.renderers.WarehouseRenderer;
 import com.google.common.collect.ImmutableTable;
 import com.google.common.collect.Table;
 import org.apache.commons.math3.random.RandomGenerator;
+import taxi.TaxiExample;
 
 import javax.measure.unit.SI;
 import java.util.Map;
@@ -23,12 +26,14 @@ import java.util.Map;
 public class AGVExample {
 
     private static final long SERVICE_DURATION = 60000;
-    private static final int MAX_CAPACITY = 3;
+    private static final int MAX_CAPACITY = 1;
 
     private static final double VEHICLE_LENGTH = 2d;
-    private static final int NUM_AGVS = 1;
+    private static final int NUM_AGVS = 3;
     private static final long TEST_END_TIME = 10 * 60 * 1000L;
     private static final int TEST_SPEED_UP = 16;
+    private static final int NUM_PARCELS = 3;
+    private static final double NEW_PACKAGE_PROB = 0.007;
 
     private AGVExample() {}
 
@@ -82,18 +87,38 @@ public class AGVExample {
                 .addModel(CommModel.builder())
                 .build();
 
-
         RoadModel roadModel = sim.getModelProvider().getModel(DynamicGraphRoadModel.class);
+        sim.getRandomGenerator().nextDouble();
         sim.getRandomGenerator().nextDouble();
         for (int i = 0; i < NUM_AGVS; i++) {
             sim.register(new SimpleAgent(sim.getRandomGenerator(), roadModel.getRandomPosition(sim.getRandomGenerator())));
         }
         RandomGenerator rng = sim.getRandomGenerator();
-        sim.register(new Package(
-                Parcel.builder(roadModel.getRandomPosition(rng),
-                        roadModel.getRandomPosition(rng))
-                        .neededCapacity(1 + rng.nextInt(MAX_CAPACITY))
-                        .buildDTO()));
+
+        for (int i = 0; i < NUM_PARCELS; i++){
+            sim.register(new Package(
+                    Parcel.builder(roadModel.getRandomPosition(rng),
+                            roadModel.getRandomPosition(rng))
+                            .neededCapacity(1 + rng.nextInt(MAX_CAPACITY))
+                            .buildDTO()));
+        }
+
+
+        sim.addTickListener(new TickListener() {
+            @Override
+            public void tick(TimeLapse time) {
+                if (rng.nextDouble() < NEW_PACKAGE_PROB) {
+                    sim.register(new Package(
+                            Parcel.builder(roadModel.getRandomPosition(rng),
+                                    roadModel.getRandomPosition(rng))
+                                    .neededCapacity(1 + rng.nextInt(MAX_CAPACITY))
+                                    .buildDTO()));
+                }
+            }
+
+            @Override
+            public void afterTick(TimeLapse timeLapse) {}
+        });
 
         sim.start();
     }

@@ -86,7 +86,8 @@ public class SimpleAgent extends Vehicle implements TickListener, MovingRoadUser
                 nextDestination(rm);
             }
 
-            rm.followPath(this, path, time);
+            //rm.followPath(this, path, time);
+            rm.moveTo(this, destination.get(), time);
 
             if (rm.getPosition(this).equals(destination.get())) {
                 nextDestination(rm);
@@ -158,8 +159,9 @@ public class SimpleAgent extends Vehicle implements TickListener, MovingRoadUser
      */
     private void replyContractBid(Message message) {
         List<Point> pathToParcel = getRoadModel().getShortestPathTo(getPosition().get(), message.getSender().getPosition().get());
-        //double distance = getRoadModel().getDistanceOfPath(pathToParcel).getValue();
-        device.get().send(new Package.PackageMessage(0), message.getSender());
+        double distance = pathToParcel.size();
+        double test = getRoadModel().get
+        device.get().send(new Package.PackageMessage(distance), message.getSender());
     }
 
     void nextDestination(RoadModel roadModel) {
