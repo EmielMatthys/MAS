@@ -23,3 +23,15 @@
 hs_err_pid*
 
 \.idea/
+
+src/main/java/factory/
+
+src/main/java/simple/
+
+src/main/java/simplepdp/
+
+src/main/java/zitting2/
+
+src/main/resources/
+
+target/
