@@ -107,7 +107,7 @@ public class SimpleAgent extends Vehicle implements TickListener, MovingRoadUser
                 // Pick one assignment and cancel all others (so they can broadcast again)
                 if(assignements.size() > 0){
                     current = Optional.of((Parcel) assignements.get(0).getSender());
-                    LOGGER.warn("Received assignment from " + assignements.get(0).getSender());
+                    LOGGER.debug("Received assignment from " + assignements.get(0).getSender());
                     for(int i = 1; i < assignements.size(); i++){
                         replyCancelContract(assignements.get(i));
                     }
@@ -169,7 +169,7 @@ public class SimpleAgent extends Vehicle implements TickListener, MovingRoadUser
      * @param message
      */
     private void replyCancelContract(Message message) {
-        LOGGER.warn(this + ": sending cancel reply to " + message.getSender());
+        LOGGER.debug(this + ": sending cancel reply to " + message.getSender());
         device.get().send(new Package.PackageMessage(Package.PackageMessage.MessageType.CONTRACT_CANCEL), message.getSender());
     }
 

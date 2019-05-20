@@ -29,6 +29,9 @@ public class Package extends Parcel implements CommUser, TickListener, RoadUser 
     private PackageState state = PackageState.BROADCAST;
     private Optional<CommUser> assigned_truck = Optional.absent();
 
+    private static final int TIMEOUT = 200;
+    private int timeOutTick = 0;
+
     enum PackageState {
         BROADCAST, LISTENING, ASSIGNED
     }
@@ -85,13 +88,22 @@ public class Package extends Parcel implements CommUser, TickListener, RoadUser 
 
             if(biddings.size() > 0) {
                 Message best = biddings.get(0);
-                LOGGER.warn("Sending contract assignment from "+this+" to " + best.getSender());
+                LOGGER.debug("Sending contract assignment from "+this+" to " + best.getSender());
                 device.get().send(new PackageMessage(PackageMessage.MessageType.CONTRACT_ASSIGN), best.getSender());
                 assigned_truck = Optional.of(best.getSender());
                 state = PackageState.ASSIGNED;
+                timeOutTick = TIMEOUT;
+
             }
         }
         else if(state == PackageState.ASSIGNED){
+            if(timeOutTick <= 0){
+                assigned_truck = Optional.absent();
+                state = PackageState.BROADCAST;
+                LOGGER.warn("timeout tick occurred");
+            }
+            timeOutTick--;
+
             ImmutableList<Message> messages = device.get().getUnreadMessages();
             if(messages.size() == 0)
                 return;
@@ -100,7 +112,7 @@ public class Package extends Parcel implements CommUser, TickListener, RoadUser 
                     .stream()
                     .anyMatch(message -> ((PackageMessage)message.getContents()).getType() == PackageMessage.MessageType.CONTRACT_CANCEL)) {
 
-                LOGGER.warn("Contract for package " + this + " assignment was canceled! Broadcasting again...");
+                LOGGER.debug("Contract for package " + this + " assignment was canceled! Broadcasting again...");
                 assigned_truck = Optional.absent();
                 state = PackageState.BROADCAST;
             }
