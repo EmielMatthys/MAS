@@ -18,10 +18,10 @@ import com.github.rinde.rinsim.ui.renderers.WarehouseRenderer;
 import com.google.common.collect.ImmutableTable;
 import com.google.common.collect.Table;
 import org.apache.commons.math3.random.RandomGenerator;
-import taxi.TaxiExample;
 
 import javax.measure.unit.SI;
 import java.util.Map;
+import java.util.Set;
 
 public class AGVExample {
 
@@ -34,6 +34,7 @@ public class AGVExample {
     private static final int TEST_SPEED_UP = 16;
     private static final int NUM_PARCELS = 3;
     private static final double NEW_PACKAGE_PROB = 0.007;
+    private static final int PACKAGE_NUM_MAX = 8;
 
     private AGVExample() {}
 
@@ -107,7 +108,8 @@ public class AGVExample {
         sim.addTickListener(new TickListener() {
             @Override
             public void tick(TimeLapse time) {
-                if (rng.nextDouble() < NEW_PACKAGE_PROB) {
+                Set<Package> packages = roadModel.getObjectsOfType(Package.class);
+                if (packages.size() < PACKAGE_NUM_MAX && rng.nextDouble() < NEW_PACKAGE_PROB) {
                     sim.register(new Package(
                             Parcel.builder(roadModel.getRandomPosition(rng),
                                     roadModel.getRandomPosition(rng))

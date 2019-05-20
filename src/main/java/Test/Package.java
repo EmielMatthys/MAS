@@ -71,9 +71,9 @@ public class Package extends Parcel implements CommUser, TickListener, RoadUser 
                 return;
             }
 
-            Message best = messages
+            ArrayList<Message> biddings = messages
                     .stream()
-                    .filter(message -> ((PackageMessage)message.getContents()).getType() == PackageMessage.MessageType.CONTRACT_BID)
+                    .filter(message -> ((PackageMessage) message.getContents()).getType() == PackageMessage.MessageType.CONTRACT_BID)
                     .sorted(new Comparator<Message>() {
                         @Override
                         public int compare(Message message, Message t1) {
@@ -83,13 +83,15 @@ public class Package extends Parcel implements CommUser, TickListener, RoadUser 
                             return Double.compare(contents1.getValue(), contents2.getValue());
                         }
                     })
-                    .collect(Collectors.toCollection(ArrayList::new))
-                    .get(0);
+                    .collect(Collectors.toCollection(ArrayList::new));
 
-            LOGGER.debug("Sending contract assignment");
-            device.get().send(new PackageMessage(PackageMessage.MessageType.CONTRACT_ASSIGN), best.getSender());
-            assigned_truck = Optional.of(best.getSender());
-            state = PackageState.ASSIGNED;
+            if(biddings.size() > 0) {
+                LOGGER.debug("Sending contract assignment");
+                Message best = biddings.get(0);
+                device.get().send(new PackageMessage(PackageMessage.MessageType.CONTRACT_ASSIGN), best.getSender());
+                assigned_truck = Optional.of(best.getSender());
+                state = PackageState.ASSIGNED;
+            }
         }
         else if(state == PackageState.ASSIGNED){
             ImmutableList<Message> messages = device.get().getUnreadMessages();

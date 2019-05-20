@@ -158,7 +158,13 @@ public class SimpleAgent extends Vehicle implements TickListener, MovingRoadUser
      * @param message
      */
     private void replyContractBid(Message message) {
-        List<Point> pathToParcel = getRoadModel().getShortestPathTo(getPosition().get(), message.getSender().getPosition().get());
+        Point thisPosition = getPosition().get();
+        Optional<Point> senderPosition = message.getSender().getPosition();
+
+        if(!senderPosition.isPresent())
+            return;
+
+        List<Point> pathToParcel = getRoadModel().getShortestPathTo(thisPosition, senderPosition.get());
         double distance = pathToParcel.size();
         device.get().send(new Package.PackageMessage(distance), message.getSender());
     }
