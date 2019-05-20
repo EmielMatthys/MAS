@@ -67,21 +67,18 @@ public class Package extends Parcel implements CommUser, TickListener, RoadUser 
         else if(state == PackageState.LISTENING){
             ImmutableList<Message> messages = device.get().getUnreadMessages();
             if(messages.size() == 0){
-                state = PackageState.BROADCAST; //TODO range increase?
+                state = PackageState.BROADCAST;
                 return;
             }
 
             ArrayList<Message> biddings = messages
                     .stream()
                     .filter(message -> ((PackageMessage) message.getContents()).getType() == PackageMessage.MessageType.CONTRACT_BID)
-                    .sorted(new Comparator<Message>() {
-                        @Override
-                        public int compare(Message message, Message t1) {
-                            PackageMessage contents1 = ((PackageMessage) message.getContents());
-                            PackageMessage contents2 = ((PackageMessage) message.getContents());
+                    .sorted((message, t1) -> {
+                        PackageMessage contents1 = ((PackageMessage) message.getContents());
+                        PackageMessage contents2 = ((PackageMessage) message.getContents());
 
-                            return Double.compare(contents1.getValue(), contents2.getValue());
-                        }
+                        return Double.compare(contents1.getValue(), contents2.getValue());
                     })
                     .collect(Collectors.toCollection(ArrayList::new));
 
