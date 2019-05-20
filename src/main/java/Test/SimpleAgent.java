@@ -76,8 +76,9 @@ public class SimpleAgent extends Vehicle implements TickListener, MovingRoadUser
         RoadModel rm = getRoadModel();
         PDPModel pm = getPDPModel();
 
-        if(!time.hasTimeLeft())
+        if(!time.hasTimeLeft()){
             return;
+        }
 
         if(!current.isPresent()) {
             // No parcel to be picked up or delivered --> roam
@@ -106,8 +107,9 @@ public class SimpleAgent extends Vehicle implements TickListener, MovingRoadUser
                 // Pick one assignment and cancel all others (so they can broadcast again)
                 if(assignements.size() > 0){
                     current = Optional.of((Parcel) assignements.get(0).getSender());
+                    LOGGER.warn("Received assignment from " + assignements.get(0).getSender());
                     for(int i = 1; i < assignements.size(); i++){
-                        replyCancelContract(assignements.get(0));
+                        replyCancelContract(assignements.get(i));
                     }
                 }
                 else {
@@ -132,6 +134,7 @@ public class SimpleAgent extends Vehicle implements TickListener, MovingRoadUser
                 if (rm.getPosition(this).equals(current.get().getDeliveryLocation())) {
                     // deliver when we arrive
                     pm.deliver(this, current.get(), time);
+                    nextDestination(rm);
                 }
             } else {
                 // it is still available, go there as fast as possible
@@ -154,7 +157,7 @@ public class SimpleAgent extends Vehicle implements TickListener, MovingRoadUser
                 // Pick one assignment and cancel all others (so they can broadcast again)
                 if (assignements.size() > 0) {
                     for (int i = 0; i < assignements.size(); i++) {
-                        replyCancelContract(assignements.get(0));
+                        replyCancelContract(assignements.get(i));
                     }
                 }
             }
@@ -166,6 +169,7 @@ public class SimpleAgent extends Vehicle implements TickListener, MovingRoadUser
      * @param message
      */
     private void replyCancelContract(Message message) {
+        LOGGER.warn(this + ": sending cancel reply to " + message.getSender());
         device.get().send(new Package.PackageMessage(Package.PackageMessage.MessageType.CONTRACT_CANCEL), message.getSender());
     }
 
@@ -178,8 +182,10 @@ public class SimpleAgent extends Vehicle implements TickListener, MovingRoadUser
         Point thisPosition = getPosition().get();
         Optional<Point> senderPosition = message.getSender().getPosition();
 
-        if(!senderPosition.isPresent())
+        if(!senderPosition.isPresent()){
+            LOGGER.error("senderPosition was absent!");
             return;
+        }
 
         List<Point> pathToParcel = getRoadModel().getShortestPathTo(thisPosition, senderPosition.get());
         double distance = pathToParcel.size();
@@ -206,6 +212,7 @@ public class SimpleAgent extends Vehicle implements TickListener, MovingRoadUser
             builder.setMaxRange(range);
         }
         device = Optional.of(builder
+                .setReliability(1)
                 .build());
     }
 

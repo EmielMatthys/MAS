@@ -52,6 +52,7 @@ public class Package extends Parcel implements CommUser, TickListener, RoadUser 
     public void setCommDevice(CommDeviceBuilder builder) {
         this.device = Optional.of(builder.
                 setMaxRange(COMM_RANGE)
+                .setReliability(1)
                 .build());
     }
 
@@ -83,8 +84,8 @@ public class Package extends Parcel implements CommUser, TickListener, RoadUser 
                     .collect(Collectors.toCollection(ArrayList::new));
 
             if(biddings.size() > 0) {
-                LOGGER.debug("Sending contract assignment");
                 Message best = biddings.get(0);
+                LOGGER.warn("Sending contract assignment from "+this+" to " + best.getSender());
                 device.get().send(new PackageMessage(PackageMessage.MessageType.CONTRACT_ASSIGN), best.getSender());
                 assigned_truck = Optional.of(best.getSender());
                 state = PackageState.ASSIGNED;
@@ -99,7 +100,7 @@ public class Package extends Parcel implements CommUser, TickListener, RoadUser 
                     .stream()
                     .anyMatch(message -> ((PackageMessage)message.getContents()).getType() == PackageMessage.MessageType.CONTRACT_CANCEL)) {
 
-                LOGGER.debug("Contract assignment was canceled! Broadcasting again...");
+                LOGGER.warn("Contract for package " + this + " assignment was canceled! Broadcasting again...");
                 assigned_truck = Optional.absent();
                 state = PackageState.BROADCAST;
             }
