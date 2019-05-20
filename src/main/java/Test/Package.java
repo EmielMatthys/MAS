@@ -13,6 +13,7 @@ import com.google.common.collect.ImmutableList;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.swing.text.html.Option;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.stream.Collectors;
@@ -21,10 +22,11 @@ public class Package extends Parcel implements CommUser, TickListener {
 
     protected static final Logger LOGGER = LoggerFactory.getLogger(Package.class);
     private static final double COMM_RANGE = 5;
-    private Optional<CommDevice> device;
+    private Optional<CommDevice> device = Optional.absent();
 
     private static final long TIME_WAIT = 2000;
     private PackageState state = PackageState.BROADCAST;
+    private Optional<CommUser> assigned_truck = Optional.absent();
 
     enum PackageState {
         BROADCAST, LISTENING, ASSIGNED
@@ -58,12 +60,13 @@ public class Package extends Parcel implements CommUser, TickListener {
         else if(state == PackageState.LISTENING){
             ImmutableList<Message> messages = device.get().getUnreadMessages();
             if(messages.size() == 0){
-                state = PackageState.BROADCAST;
+                state = PackageState.BROADCAST; //TODO range increase?
                 return;
             }
 
             Message best = messages
                     .stream()
+                    .filter(message -> ((PackageMessage)message.getContents()).getType() == PackageMessage.MessageType.CONTRACT_BID)
                     .sorted(new Comparator<Message>() {
                         @Override
                         public int compare(Message message, Message t1) {
@@ -77,7 +80,25 @@ public class Package extends Parcel implements CommUser, TickListener {
                     .get(0);
 
             device.get().send(new PackageMessage(PackageMessage.MessageType.CONTRACT_ASSIGN), best.getSender());
+            assigned_truck = Optional.of(best.getSender());
             state = PackageState.ASSIGNED;
+        }
+        else if(state == PackageState.ASSIGNED){
+            ImmutableList<Message> messages = device.get().getUnreadMessages();
+            if(messages.size() == 0){
+                state = PackageState.BROADCAST; //TODO range increase?
+                return;
+            }
+
+            if(messages
+                    .stream()
+                    .anyMatch(message -> ((PackageMessage)message.getContents()).getType() == PackageMessage.MessageType.CONTRACT_CANCEL
+                    && message.getSender() == assigned_truck)) {
+
+                assigned_truck = Optional.absent();
+                state = PackageState.BROADCAST;
+            }
+
         }
     }
 
@@ -87,7 +108,7 @@ public class Package extends Parcel implements CommUser, TickListener {
 
     public static class PackageMessage implements MessageContents {
         enum MessageType{
-            CONTRACT_ANNOUNCE, CONTRACT_BID, CONTRACT_ASSIGN
+            CONTRACT_ANNOUNCE, CONTRACT_BID, CONTRACT_ASSIGN, CONTRACT_CANCEL
         }
 
         private final MessageType type;
@@ -105,6 +126,10 @@ public class Package extends Parcel implements CommUser, TickListener {
 
         public double getValue() {
             return value;
+        }
+
+        public MessageType getType() {
+            return type;
         }
     }
 }
