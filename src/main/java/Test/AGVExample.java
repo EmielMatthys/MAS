@@ -84,7 +84,7 @@ public class AGVExample {
 
 
         RoadModel roadModel = sim.getModelProvider().getModel(DynamicGraphRoadModel.class);
-
+        sim.getRandomGenerator().nextDouble();
         for (int i = 0; i < NUM_AGVS; i++) {
             sim.register(new SimpleAgent(sim.getRandomGenerator(), roadModel.getRandomPosition(sim.getRandomGenerator())));
         }
@@ -92,7 +92,6 @@ public class AGVExample {
         sim.register(new Package(
                 Parcel.builder(roadModel.getRandomPosition(rng),
                         roadModel.getRandomPosition(rng))
-                        .serviceDuration(SERVICE_DURATION)
                         .neededCapacity(1 + rng.nextInt(MAX_CAPACITY))
                         .buildDTO()));
 

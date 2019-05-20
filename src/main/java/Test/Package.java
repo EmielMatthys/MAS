@@ -5,6 +5,7 @@ import com.github.rinde.rinsim.core.model.pdp.PDPModel;
 import com.github.rinde.rinsim.core.model.pdp.Parcel;
 import com.github.rinde.rinsim.core.model.pdp.ParcelDTO;
 import com.github.rinde.rinsim.core.model.road.RoadModel;
+import com.github.rinde.rinsim.core.model.road.RoadUser;
 import com.github.rinde.rinsim.core.model.time.TickListener;
 import com.github.rinde.rinsim.core.model.time.TimeLapse;
 import com.github.rinde.rinsim.geom.Point;
@@ -18,7 +19,7 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.stream.Collectors;
 
-public class Package extends Parcel implements CommUser, TickListener {
+public class Package extends Parcel implements CommUser, TickListener, RoadUser {
 
     protected static final Logger LOGGER = LoggerFactory.getLogger(Package.class);
     private static final double COMM_RANGE = 5;
@@ -38,7 +39,13 @@ public class Package extends Parcel implements CommUser, TickListener {
 
     @Override
     public Optional<Point> getPosition() {
-        return Optional.of(getRoadModel().getPosition(this));
+        RoadModel rm = getRoadModel();
+        if(rm.containsObject(this)){
+            return Optional.of(rm.getPosition(this));
+        }
+        else {
+            return Optional.absent();
+        }
     }
 
     @Override
@@ -61,6 +68,7 @@ public class Package extends Parcel implements CommUser, TickListener {
             ImmutableList<Message> messages = device.get().getUnreadMessages();
             if(messages.size() == 0){
                 state = PackageState.BROADCAST; //TODO range increase?
+                LOGGER.debug("No response, broadcasting again");
                 return;
             }
 
@@ -79,22 +87,22 @@ public class Package extends Parcel implements CommUser, TickListener {
                     .collect(Collectors.toCollection(ArrayList::new))
                     .get(0);
 
+            LOGGER.debug("Sending contract assignment");
             device.get().send(new PackageMessage(PackageMessage.MessageType.CONTRACT_ASSIGN), best.getSender());
             assigned_truck = Optional.of(best.getSender());
             state = PackageState.ASSIGNED;
         }
         else if(state == PackageState.ASSIGNED){
             ImmutableList<Message> messages = device.get().getUnreadMessages();
-            if(messages.size() == 0){
-                state = PackageState.BROADCAST; //TODO range increase?
+            if(messages.size() == 0)
                 return;
-            }
 
             if(messages
                     .stream()
                     .anyMatch(message -> ((PackageMessage)message.getContents()).getType() == PackageMessage.MessageType.CONTRACT_CANCEL
                     && message.getSender() == assigned_truck)) {
 
+                LOGGER.debug("Contract assignment was canceled! Broadcasting again...");
                 assigned_truck = Optional.absent();
                 state = PackageState.BROADCAST;
             }
