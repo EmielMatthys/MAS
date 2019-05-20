@@ -18,7 +18,6 @@ import com.github.rinde.rinsim.ui.renderers.WarehouseRenderer;
 import com.google.common.collect.ImmutableTable;
 import com.google.common.collect.Table;
 import org.apache.commons.math3.random.RandomGenerator;
-import taxi.TaxiExample;
 
 import javax.measure.unit.SI;
 import java.util.Map;
@@ -121,10 +120,9 @@ public class AGVExample {
                 }
                 Set<Package> packages = roadModel.getObjectsOfType(Package.class);
                 if (packages.size() < MAX_NUM_PACKAGES) {
-                    if (rng.nextDouble() <= 0.05) {
-                        System.out.println("NEW PACKAGE CREATED");
-                        sim.register(buildPackage(roadModel, rng));
-                    }
+                    //System.out.println(rng.nextDouble());
+
+                    sim.register(buildPackage(roadModel, rng));
                 }
             }
 
@@ -138,7 +136,6 @@ public class AGVExample {
         return new Package(
                 Parcel.builder(roadModel.getRandomPosition(rng),
                         roadModel.getRandomPosition(rng))
-                        .serviceDuration(SERVICE_DURATION)
                         .neededCapacity(1 + rng.nextInt(MAX_CAPACITY))
                         .buildDTO());
     }
