@@ -11,14 +11,12 @@ import com.github.rinde.rinsim.core.model.time.TickListener;
 import com.github.rinde.rinsim.core.model.time.TimeLapse;
 import com.github.rinde.rinsim.geom.*;
 import com.github.rinde.rinsim.ui.View;
-import com.github.rinde.rinsim.ui.renderers.AGVRenderer;
-import com.github.rinde.rinsim.ui.renderers.CommRenderer;
-import com.github.rinde.rinsim.ui.renderers.RoadUserRenderer;
-import com.github.rinde.rinsim.ui.renderers.WarehouseRenderer;
+import com.github.rinde.rinsim.ui.renderers.*;
 import com.google.common.collect.ImmutableTable;
 import com.google.common.collect.Table;
 import org.apache.commons.math3.random.RandomGenerator;
 
+import javax.measure.unit.NonSI;
 import javax.measure.unit.SI;
 import java.util.Map;
 import java.util.Set;
@@ -53,11 +51,14 @@ public class AGVExample {
      */
     public static void run(boolean testing) {
         View.Builder viewBuilder = View.builder()
-                .with(WarehouseRenderer.builder()
-                        .withMargin(VEHICLE_LENGTH))
-                .with(AGVRenderer.builder()
-                        .withDifferentColorsForVehicles())
+//                .with(WarehouseRenderer.builder()
+//                        .withMargin(VEHICLE_LENGTH))
+//                .with(AGVRenderer.builder()
+//                        .withDifferentColorsForVehicles())
+                .with(GraphRoadModelRenderer.builder())
+                .with(CustomRenderer.builder(CustomRenderer.Language.ENGLISH))
                 .with(CommRenderer.builder());
+
 
         if (testing) {
             viewBuilder = viewBuilder.withAutoPlay()
@@ -73,22 +74,23 @@ public class AGVExample {
                     viewBuilder.withTitleAppendix("AGV example")
                             .with(RoadUserRenderer.builder()
                                     .withImageAssociation(
-                                            Package.class, "/graphics/perspective/deliverypackage2.png"))
+                                            Package.class, "/graphics/perspective/deliverypackage2.png")
+                                    .withImageAssociation(
+                                            SimpleAgent.class, "/graphics/flat/taxi-32.png"));
             ;
         }
 
         final Simulator sim = Simulator.builder()
                 .addModel(
-                        RoadModelBuilders.dynamicGraph(AGVExample.GraphCreator.createTestGraph())
-                                .withCollisionAvoidance()
-                                .withDistanceUnit(SI.METER)
-                                .withVehicleLength(VEHICLE_LENGTH))
+                        RoadModelBuilders.staticGraph(AGVExample.GraphCreator.createTestGraph())
+//                                .withCollisionAvoidance()
+                                .withDistanceUnit(SI.METER).withSpeedUnit(NonSI.KILOMETERS_PER_HOUR))
                 .addModel(viewBuilder)
                 .addModel(DefaultPDPModel.builder())
                 .addModel(CommModel.builder())
                 .build();
 
-        RoadModel roadModel = sim.getModelProvider().getModel(DynamicGraphRoadModel.class);
+        RoadModel roadModel = sim.getModelProvider().getModel(RoadModel.class);
         sim.getRandomGenerator().nextDouble();
         sim.getRandomGenerator().nextDouble();
         for (int i = 0; i < NUM_AGVS; i++) {

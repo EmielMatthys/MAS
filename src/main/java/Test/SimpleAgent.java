@@ -30,7 +30,7 @@ public class SimpleAgent extends Vehicle implements TickListener, MovingRoadUser
     protected static final Logger LOGGER = LoggerFactory.getLogger(SimpleAgent.class);
 
     private static final int VEHICLE_CAPACITY = 1;
-    private static final double VEHICLE_SPEED = 10;
+    private static final double VEHICLE_SPEED = 1000d;
     private final RandomGenerator rng;
 
     // Roaming stuff

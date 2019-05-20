@@ -15,6 +15,7 @@
  */
 package taxi;
 
+import Test.AGVExample;
 import com.github.rinde.rinsim.core.Simulator;
 import com.github.rinde.rinsim.core.model.pdp.*;
 import com.github.rinde.rinsim.core.model.road.RoadModel;
@@ -114,7 +115,7 @@ public final class TaxiExample {
 
     // use map of leuven
     final Simulator simulator = Simulator.builder()
-      .addModel(RoadModelBuilders.staticGraph(loadGraph(graphFile)))
+      .addModel(RoadModelBuilders.staticGraph(AGVExample.GraphCreator.createTestGraph()))
       .addModel(DefaultPDPModel.builder())
       .addModel(view)
       .build();
