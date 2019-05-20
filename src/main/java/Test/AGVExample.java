@@ -7,6 +7,8 @@ import com.github.rinde.rinsim.core.model.pdp.Parcel;
 import com.github.rinde.rinsim.core.model.road.DynamicGraphRoadModel;
 import com.github.rinde.rinsim.core.model.road.RoadModel;
 import com.github.rinde.rinsim.core.model.road.RoadModelBuilders;
+import com.github.rinde.rinsim.core.model.time.TickListener;
+import com.github.rinde.rinsim.core.model.time.TimeLapse;
 import com.github.rinde.rinsim.geom.*;
 import com.github.rinde.rinsim.ui.View;
 import com.github.rinde.rinsim.ui.renderers.AGVRenderer;
@@ -19,6 +21,7 @@ import org.apache.commons.math3.random.RandomGenerator;
 
 import javax.measure.unit.SI;
 import java.util.Map;
+import java.util.Set;
 
 public class AGVExample {
 
@@ -27,6 +30,8 @@ public class AGVExample {
 
     private static final double VEHICLE_LENGTH = 2d;
     private static final int NUM_AGVS = 1;
+    private static final int MAX_NUM_PACKAGES = 8;
+    private static final int TOTAL_NUM_PACKAGES = 50;
     private static final long TEST_END_TIME = 10 * 60 * 1000L;
     private static final int TEST_SPEED_UP = 16;
 
@@ -86,17 +91,56 @@ public class AGVExample {
         RoadModel roadModel = sim.getModelProvider().getModel(DynamicGraphRoadModel.class);
         sim.getRandomGenerator().nextDouble();
         for (int i = 0; i < NUM_AGVS; i++) {
-            sim.register(new SimpleAgent(sim.getRandomGenerator(), roadModel.getRandomPosition(sim.getRandomGenerator())));
-        }
-        RandomGenerator rng = sim.getRandomGenerator();
-        sim.register(new Package(
-                Parcel.builder(roadModel.getRandomPosition(rng),
-                        roadModel.getRandomPosition(rng))
-                        .neededCapacity(1 + rng.nextInt(MAX_CAPACITY))
-                        .buildDTO()));
+            while (true) {
+                try {
+                    sim.register(new SimpleAgent(sim.getRandomGenerator(), roadModel.getRandomPosition(sim.getRandomGenerator())));
+                    break;
+                } catch (IllegalArgumentException e) {
 
+                }
+            }
+
+        }
+
+
+        RandomGenerator rng = sim.getRandomGenerator();
+
+        int numb_packages_spawnded = 0;
+
+        sim.register(buildPackage(roadModel, rng));
+
+        sim.addTickListener(new TickListener() {
+            @Override
+            public void tick(TimeLapse time) {
+
+                if (numb_packages_spawnded > TOTAL_NUM_PACKAGES) {
+                    sim.stop();
+                }
+                Set<Package> packages = roadModel.getObjectsOfType(Package.class);
+                if (packages.size() < MAX_NUM_PACKAGES) {
+                    if (rng.nextDouble() <= 0.05) {
+                        System.out.println("NEW PACKAGE CREATED");
+                        sim.register(buildPackage(roadModel, rng));
+                    }
+                }
+            }
+
+            @Override
+            public void afterTick(TimeLapse timeLapse) {}
+        });
         sim.start();
     }
+
+    public static Package buildPackage(RoadModel roadModel, RandomGenerator rng) {
+        return new Package(
+                Parcel.builder(roadModel.getRandomPosition(rng),
+                        roadModel.getRandomPosition(rng))
+                        .serviceDuration(SERVICE_DURATION)
+                        .neededCapacity(1 + rng.nextInt(MAX_CAPACITY))
+                        .buildDTO());
+    }
+
+
 
     public static class GraphCreator {
         static final int LEFT_CENTER_U_ROW = 4;
