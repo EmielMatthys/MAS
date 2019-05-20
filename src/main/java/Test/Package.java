@@ -97,8 +97,7 @@ public class Package extends Parcel implements CommUser, TickListener, RoadUser 
 
             if(messages
                     .stream()
-                    .anyMatch(message -> ((PackageMessage)message.getContents()).getType() == PackageMessage.MessageType.CONTRACT_CANCEL
-                    && message.getSender() == assigned_truck)) {
+                    .anyMatch(message -> ((PackageMessage)message.getContents()).getType() == PackageMessage.MessageType.CONTRACT_CANCEL)) {
 
                 LOGGER.debug("Contract assignment was canceled! Broadcasting again...");
                 assigned_truck = Optional.absent();

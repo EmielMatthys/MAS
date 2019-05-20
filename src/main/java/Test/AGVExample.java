@@ -76,7 +76,7 @@ public class AGVExample {
                                     .withImageAssociation(
                                             Package.class, "/graphics/perspective/deliverypackage2.png")
                                     .withImageAssociation(
-                                            SimpleAgent.class, "/graphics/flat/taxi-32.png"));
+                                            SimpleAgent.class, "/graphics/flat/flatbed-truck-32.png"));
             ;
         }
 

@@ -141,6 +141,23 @@ public class SimpleAgent extends Vehicle implements TickListener, MovingRoadUser
                     pm.pickup(this, current.get(), time);
                 }
             }
+
+            if(device.get().getUnreadCount() > 0) {
+                ImmutableList<Message> messages = device.get().getUnreadMessages();
+
+                // Check for incoming assignments
+                List<Message> assignements = messages.stream()
+                        .filter(message -> ((Package.PackageMessage) message.getContents()).getType()
+                                == Package.PackageMessage.MessageType.CONTRACT_ASSIGN)
+                        .collect(Collectors.toList());
+
+                // Pick one assignment and cancel all others (so they can broadcast again)
+                if (assignements.size() > 0) {
+                    for (int i = 0; i < assignements.size(); i++) {
+                        replyCancelContract(assignements.get(0));
+                    }
+                }
+            }
         }
     }
 
