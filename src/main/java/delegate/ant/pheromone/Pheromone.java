@@ -46,6 +46,6 @@ public class Pheromone implements TickListener, RoadUser {
     }
 
     public Point getLocation() {
-        return location;
+        return location; // Doesnt move so always the same
     }
 }
