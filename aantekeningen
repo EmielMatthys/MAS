@@ -21,12 +21,10 @@
 
 ### Research questions:
 * How do delegate MAS and non-delegate MAS implementations compare in an increasing map scale.
-* How do delegate MAS and non-delegate MAS implementations compare in a dynamic environment? (nodes disappearing etc)
 * How do delegate MAS and non-delegate MAS implementations compare when communication range decreases.
 
 ### Hypothesis:
 * Delegate MAS implementation will perform better in terms of lateness when map scale increases.
-* Delegate MAS implementation will perform better in terms of lateness when dynamism increases.
 * Delegate MAS will perform better in terms of lateness when communication range decreases.
 
 ### Solution strategies
@@ -36,20 +34,22 @@
 * Full map knowledge: only simple implementation or also Delegate MAS?
 
 #### Non-delegate MAS implementation:
-* Based on Taxi example in RinSim
+* Based on Taxi(?) example in RinSim
 * Packages are detected by trucks when they are within a short range
 * If the truck has space left, it attempts to pick up the package in range. Alternatively: check if enough time for pickup...
 * Else it will attempt to drive to the delivery location of package with shortest time left.
 * Alternative: Only one package per truck and deliver instantly --> delegated mas implementation also?
+Holvoet: Niet focussen op hoe het gebeurt in Taxi, zelf iets bedenken... kan simpel blijven
 
 #### Delegate MAS implementation:
-* Again based on Taxi example but with extensions
+* Again based on Taxi(?) example but with extensions
 * 3 (?) delegated MASs for feasibility, exploration and intention.
 * Communication constraint: no specific constraints --> use ants (#hops...)
 * How often are ants sent out?
 * Draw ants on-screen
+Holvoet: ants niet alleen voor pad maar ook package allocatie?
 
 ### Experimental scenario's
-* Use two maps: one bigger than the other. More packages in larger map? More trucks? (linearly?) Compare implementations based on lateness when number of trucks increases?
+* Use two maps: one bigger than the other. More packages in larger map? More trucks? (linearly?) Compare implementations based on lateness when number of trucks increases? Holvoet: hoe definieer ik scale?
 * Use one map. Randomly remove nodes (that don't contain agents) and compare average lateness between implementations.
 * Use one map. Gradually decrease communication range? --> How to implement in Delegated MAS?
