@@ -2,5 +2,5 @@ package delegate.model;
 
 public interface DMASUser {
 
-    void initialize(DMASModel dmasModel);
+    boolean initialize(DMASModel dmasModel);
 }
