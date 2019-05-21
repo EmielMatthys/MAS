@@ -4,7 +4,6 @@ import com.github.rinde.rinsim.core.Simulator;
 import com.github.rinde.rinsim.core.model.comm.CommModel;
 import com.github.rinde.rinsim.core.model.pdp.DefaultPDPModel;
 import com.github.rinde.rinsim.core.model.pdp.Parcel;
-import com.github.rinde.rinsim.core.model.road.DynamicGraphRoadModel;
 import com.github.rinde.rinsim.core.model.road.RoadModel;
 import com.github.rinde.rinsim.core.model.road.RoadModelBuilders;
 import com.github.rinde.rinsim.core.model.time.TickListener;
@@ -12,6 +11,7 @@ import com.github.rinde.rinsim.core.model.time.TimeLapse;
 import com.github.rinde.rinsim.geom.*;
 import com.github.rinde.rinsim.ui.View;
 import com.github.rinde.rinsim.ui.renderers.*;
+import com.github.rinde.rinsim.util.TimeWindow;
 import com.google.common.collect.ImmutableTable;
 import com.google.common.collect.Table;
 import org.apache.commons.math3.random.RandomGenerator;
@@ -55,7 +55,7 @@ public class AGVExample {
 //                .with(AGVRenderer.builder()
 //                        .withDifferentColorsForVehicles())
                 .with(GraphRoadModelRenderer.builder())
-                .with(CustomRenderer.builder(CustomRenderer.Language.ENGLISH))
+                .with(CustomAGVRenderer.builder(CustomAGVRenderer.Language.ENGLISH))
                 .with(CommRenderer.builder());
 
 
@@ -115,6 +115,7 @@ public class AGVExample {
                             Parcel.builder(roadModel.getRandomPosition(rng),
                                     roadModel.getRandomPosition(rng))
                                     .neededCapacity(1 + rng.nextInt(MAX_CAPACITY))
+                                    .timeWindows(TimeWindow.create(sim.getCurrentTime(), sim.getCurrentTime()+1))
                                     .buildDTO()));
                 }
             }

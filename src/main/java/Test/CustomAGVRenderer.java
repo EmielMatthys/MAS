@@ -3,7 +3,6 @@ package Test;
 import com.github.rinde.rinsim.core.model.DependencyProvider;
 import com.github.rinde.rinsim.core.model.ModelBuilder;
 import com.github.rinde.rinsim.core.model.pdp.PDPModel;
-import com.github.rinde.rinsim.core.model.pdp.Vehicle;
 import com.github.rinde.rinsim.core.model.road.RoadModel;
 import com.github.rinde.rinsim.core.model.road.RoadUser;
 import com.github.rinde.rinsim.geom.Point;
@@ -17,7 +16,7 @@ import org.eclipse.swt.graphics.GC;
 
 import java.util.Map;
 
-public class CustomRenderer extends CanvasRenderer.AbstractCanvasRenderer {
+public class CustomAGVRenderer extends CanvasRenderer.AbstractCanvasRenderer {
 
     static final int ROUND_RECT_ARC_HEIGHT = 5;
     static final int X_OFFSET = -5;
@@ -39,7 +38,7 @@ public class CustomRenderer extends CanvasRenderer.AbstractCanvasRenderer {
     final PDPModel pdpModel;
     final Language lang;
 
-    CustomRenderer(RoadModel r, PDPModel p, Language l) {
+    CustomAGVRenderer(RoadModel r, PDPModel p, Language l) {
         lang = l;
         roadModel = r;
         pdpModel = p;
@@ -98,7 +97,7 @@ public class CustomRenderer extends CanvasRenderer.AbstractCanvasRenderer {
     }
 
     static Builder builder(Language l) {
-        return new AutoValue_CustomRenderer_Builder(l);
+        return new AutoValue_CustomAGVRenderer_Builder(l);
     }
 
     // This builder is using Google's AutoValue for creating a value object, see
@@ -109,7 +108,7 @@ public class CustomRenderer extends CanvasRenderer.AbstractCanvasRenderer {
     // equals() and hashCode().
     @AutoValue
     abstract static class Builder extends
-            ModelBuilder.AbstractModelBuilder<CustomRenderer, Void> {
+            ModelBuilder.AbstractModelBuilder<CustomAGVRenderer, Void> {
 
         private static final long serialVersionUID = -1772420262312399129L;
 
@@ -120,10 +119,10 @@ public class CustomRenderer extends CanvasRenderer.AbstractCanvasRenderer {
         abstract Language language();
 
         @Override
-        public CustomRenderer build(DependencyProvider dependencyProvider) {
+        public CustomAGVRenderer build(DependencyProvider dependencyProvider) {
             final RoadModel rm = dependencyProvider.get(RoadModel.class);
             final PDPModel pm = dependencyProvider.get(PDPModel.class);
-            return new CustomRenderer(rm, pm, language());
+            return new CustomAGVRenderer(rm, pm, language());
         }
     }
 }

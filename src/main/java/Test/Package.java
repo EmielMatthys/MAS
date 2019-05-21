@@ -100,7 +100,6 @@ public class Package extends Parcel implements CommUser, TickListener, RoadUser 
             if(timeOutTick <= 0){
                 assigned_truck = Optional.absent();
                 state = PackageState.BROADCAST;
-                LOGGER.warn("timeout tick occurred");
             }
             timeOutTick--;
 
