@@ -26,8 +26,6 @@ public class Truck extends Vehicle implements TickListener, MovingRoadUser {
     //Temp to give with Intention Ant
     private Optional<Point> destination;
 
-    boolean first = true;
-
 
     public Truck(RandomGenerator rng, Simulator sim, Point startPos) {
         super(VehicleDTO.builder()
