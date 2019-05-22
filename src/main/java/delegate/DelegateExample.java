@@ -43,7 +43,7 @@ public class DelegateExample {
 //                .with(AGVRenderer.builder()
 //                        .withDifferentColorsForVehicles())
                 .with(GraphRoadModelRenderer.builder())
-                .with(RoadUserRenderer.builder().withCircleAroundObjects()
+                .with(RoadUserRenderer.builder()
                         .withImageAssociation(
                                 Package.class, "/graphics/perspective/deliverypackage2.png")
                         .withImageAssociation(
