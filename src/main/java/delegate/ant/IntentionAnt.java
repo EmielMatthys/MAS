@@ -9,6 +9,7 @@ import delegate.agent.Truck;
 import delegate.ant.pheromone.IntentionPheromone;
 
 import java.util.LinkedList;
+import java.util.List;
 import java.util.Optional;
 import java.util.Queue;
 
@@ -39,9 +40,18 @@ public class IntentionAnt extends Ant implements TickListener {
         rm.moveTo(this, destination.get(), timeLapse);
 
         if (rm.getPosition(this).equals(destination.get())) {
-            dmasModel.dropPheromone(new IntentionPheromone(100, rm.getPosition(this)));
-            System.out.println("DROPPED PHEROMONE, CALLING TRUCK");
-            originator.notify(true, this);
+
+            //Check for other pheromones
+            List<IntentionPheromone> ph = dmasModel.detectPheromone(rm.getPosition(this), IntentionPheromone.class);
+
+            if (ph.isEmpty() || ph.get(0).getOriginator().equals(originator)) {
+                dmasModel.dropPheromone(new IntentionPheromone(100, rm.getPosition(this), originator));
+                originator.notify(true);
+            } else {
+                originator.notify(false);
+            }
+
+            LIFETIME = 0;
 
         }
     }
