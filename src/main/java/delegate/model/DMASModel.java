@@ -13,6 +13,8 @@ import com.github.rinde.rinsim.geom.Point;
 import com.google.auto.value.AutoValue;
 import delegate.ant.Ant;
 import delegate.ant.pheromone.Pheromone;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.lang.reflect.Array;
 import java.util.*;
@@ -22,6 +24,7 @@ import java.util.*;
  */
 public class DMASModel extends AbstractModel<DMASUser> implements TickListener, SimulatorUser {
 
+    protected static final Logger LOGGER = LoggerFactory.getLogger(DMASModel.class);
 
     RoadModel rm;
     List<Pheromone> pheromones;
@@ -36,6 +39,7 @@ public class DMASModel extends AbstractModel<DMASUser> implements TickListener, 
     }
 
     public void dropPheromone(Pheromone pheromone){
+        LOGGER.debug("Dropped pheromone " + pheromone.getClass() + " at " + pheromone.getLocation());
         if(!pheromones.contains(pheromone)){
             pheromones.add(pheromone);
         }

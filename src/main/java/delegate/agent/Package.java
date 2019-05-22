@@ -21,7 +21,9 @@ public class Package extends Parcel implements TickListener, RoadUser, Simulator
 
 
     private SimulatorAPI sim;
-    private boolean first = true;
+
+    private static final int FEAS_ANT_INTERVAL = 50;
+    private int ant_tick = 0;
 
 
     public Package(ParcelDTO parcelDto) {
@@ -30,7 +32,7 @@ public class Package extends Parcel implements TickListener, RoadUser, Simulator
 
     @Override
     public void tick(TimeLapse timeLapse) {
-        if (first) {
+        if (ant_tick == FEAS_ANT_INTERVAL) {
             RoadModel rm = getRoadModel();
 
             FeasibilityAnt ant1 = new FeasibilityAnt(rm.getPosition(this), rm.getRandomPosition(sim.getRandomGenerator()), this);
@@ -43,9 +45,10 @@ public class Package extends Parcel implements TickListener, RoadUser, Simulator
             sim.register(ant2);
             sim.register(ant3);
             sim.register(ant4);
-            first = false;
-        }
 
+            ant_tick = 0;
+        }
+        ant_tick++;
 
     }
 

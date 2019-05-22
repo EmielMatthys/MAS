@@ -29,6 +29,9 @@ import java.awt.*;
 import java.util.Set;
 
 public class DelegateExample {
+
+    private static final int MAX_PACKAGES = 2;
+
     public static void main(String[] args) {
         run();
     }
@@ -74,21 +77,11 @@ public class DelegateExample {
 
         sim.register(new Truck(rng, sim, rm.getRandomPosition(rng)));
 
-        //sim.register(new FeasibilityAnt(rm.getRandomPosition(sim.getRandomGenerator())));
-        //sim.register(new Package(Parcel.builder(rm.getRandomPosition(rng),
-        //        rm.getRandomPosition(rng))
-        //        //.neededCapacity(1 + rng.nextInt(20))
-        //        //.timeWindows(TimeWindow.create(sim.getCurrentTime(), sim.getCurrentTime()+1))
-        //        .buildDTO()));
-
-        sim.register(new Package(Parcel.builder(rm.getRandomPosition(rng),
-                rm.getRandomPosition(rng))
-                //.neededCapacity(1 + rng.nextInt(20))
-                //.timeWindows(TimeWindow.create(sim.getCurrentTime(), sim.getCurrentTime()+1))
-                .buildDTO()));
-
-        sim.register(new Truck(rm.getRandomPosition(rng)));
-
+        for(int i = 0; i < MAX_PACKAGES; i++){
+            sim.register(new Package(Parcel.builder(rm.getRandomPosition(rng),
+                    rm.getRandomPosition(rng))
+                    .buildDTO()));
+        }
 
         sim.start();
 

@@ -39,19 +39,11 @@ public class IntentionAnt extends Ant implements TickListener {
         rm.moveTo(this, destination.get(), timeLapse);
 
         if (rm.getPosition(this).equals(destination.get())) {
-            dmasModel.dropPheromone(rm.getPosition(this), new IntentionPheromone(100, rm.getPosition(this)));
+            dmasModel.dropPheromone(new IntentionPheromone(100, rm.getPosition(this)));
             System.out.println("DROPPED PHEROMONE, CALLING TRUCK");
             originator.notify(true, this);
 
         }
     }
 
-
-
-
-
-    @Override
-    public void afterTick(TimeLapse timeLapse) {
-
-    }
 }

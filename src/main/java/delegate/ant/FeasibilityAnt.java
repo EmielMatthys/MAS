@@ -8,7 +8,7 @@ import delegate.ant.pheromone.FeasibilityPheromone;
 
 import java.util.Set;
 
-public class FeasibilityAnt extends Ant implements TickListener {
+public class FeasibilityAnt extends Ant {
 
     Point destination;
     Package sourcePackage;
@@ -53,6 +53,4 @@ public class FeasibilityAnt extends Ant implements TickListener {
         this.LIFETIME--;
     }
 
-    @Override
-    public void afterTick(TimeLapse timeLapse) {    }
 }
