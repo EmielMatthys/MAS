@@ -66,12 +66,19 @@ public class DelegateExample {
                 .build();
 
         RoadModel rm = sim.getModelProvider().getModel(RoadModel.class);
+        RandomGenerator rng = sim.getRandomGenerator();
 
-        sim.getRandomGenerator().nextDouble();
+        //sim.getRandomGenerator().nextDouble();
         sim.getRandomGenerator().nextDouble();
         sim.getRandomGenerator().nextDouble();
 
-        sim.register(new FeasibilityAnt(rm.getRandomPosition(sim.getRandomGenerator())));
+
+        //sim.register(new FeasibilityAnt(rm.getRandomPosition(sim.getRandomGenerator())));
+        sim.register(new Package(Parcel.builder(rm.getRandomPosition(rng),
+                rm.getRandomPosition(rng))
+                //.neededCapacity(1 + rng.nextInt(20))
+                //.timeWindows(TimeWindow.create(sim.getCurrentTime(), sim.getCurrentTime()+1))
+                .buildDTO()));
 
 
         sim.start();
