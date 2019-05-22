@@ -8,10 +8,10 @@ import delegate.model.DMASUser;
 
 public class Ant implements DMASUser, MovingRoadUser {
 
-    private static double SPEED = 1000;
+    private static double SPEED = 5;
 
-    private DMASModel dmasModel;
-    private RoadModel roadModel;
+    protected DMASModel dmasModel;
+    protected RoadModel roadModel;
 
     private Point startLocation;
 
