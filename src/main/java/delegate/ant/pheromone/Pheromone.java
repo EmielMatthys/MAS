@@ -9,7 +9,7 @@ import com.github.rinde.rinsim.geom.Point;
 
 public class Pheromone implements TickListener {
 
-    static long DEFAULT_LIFETIME = 2000;
+    static long DEFAULT_LIFETIME = 100;
 
     long lifetime;
 

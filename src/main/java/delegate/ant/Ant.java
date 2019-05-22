@@ -62,4 +62,11 @@ public abstract class Ant implements DMASUser, MovingRoadUser, TickListener {
     }
 
 
+    protected RoadModel getRoadModel() {
+        return roadModel;
+    }
+
+    protected DMASModel getDmasModel() {
+        return dmasModel;
+    }
 }
