@@ -80,6 +80,14 @@ public class DelegateExample {
                 //.timeWindows(TimeWindow.create(sim.getCurrentTime(), sim.getCurrentTime()+1))
                 .buildDTO()));
 
+        sim.register(new Package(Parcel.builder(rm.getRandomPosition(rng),
+                rm.getRandomPosition(rng))
+                //.neededCapacity(1 + rng.nextInt(20))
+                //.timeWindows(TimeWindow.create(sim.getCurrentTime(), sim.getCurrentTime()+1))
+                .buildDTO()));
+
+        sim.register(new Truck(rm.getRandomPosition(rng)));
+
 
         sim.start();
 

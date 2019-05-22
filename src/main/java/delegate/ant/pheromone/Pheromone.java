@@ -7,13 +7,13 @@ import com.github.rinde.rinsim.core.model.time.TimeLapse;
 import com.github.rinde.rinsim.geom.Point;
 
 
-public class Pheromone implements TickListener, RoadUser {
+public class Pheromone implements TickListener {
 
     static long DEFAULT_LIFETIME = 2000;
 
     long lifetime;
 
-    RoadModel roadModel;
+//    RoadModel roadModel;
 
     Point location;
 
@@ -39,11 +39,11 @@ public class Pheromone implements TickListener, RoadUser {
     @Override
     public void afterTick(TimeLapse timeLapse) {}
 
-    @Override
-    public void initRoadUser(RoadModel model) {
-        this.roadModel = roadModel;
-        roadModel.addObjectAt(this, location);
-    }
+//    @Override
+//    public void initRoadUser(RoadModel model) {
+//        this.roadModel = roadModel;
+//        roadModel.addObjectAt(this, location);
+//    }
 
     public Point getLocation() {
         return location; // Doesnt move so always the same

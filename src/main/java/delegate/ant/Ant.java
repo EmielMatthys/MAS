@@ -2,18 +2,21 @@ package delegate.ant;
 
 import com.github.rinde.rinsim.core.model.road.MovingRoadUser;
 import com.github.rinde.rinsim.core.model.road.RoadModel;
+import com.github.rinde.rinsim.core.model.time.TickListener;
+import com.github.rinde.rinsim.core.model.time.TimeLapse;
 import com.github.rinde.rinsim.geom.Point;
 import delegate.model.DMASModel;
 import delegate.model.DMASUser;
 
-public class Ant implements DMASUser, MovingRoadUser {
+public class Ant implements DMASUser, MovingRoadUser, TickListener {
 
-    private static double SPEED = 1000;
+    private static double SPEED = 2;
+    protected int LIFETIME = 200;
 
-    private DMASModel dmasModel;
-    private RoadModel roadModel;
+    protected DMASModel dmasModel;
+    protected RoadModel roadModel;
 
-    private Point startLocation;
+    protected Point startLocation;
 
 
     public Ant(Point startLocation) {
@@ -37,4 +40,26 @@ public class Ant implements DMASUser, MovingRoadUser {
         this.roadModel = model;
         roadModel.addObjectAt(this, startLocation);
     }
+
+    public int getLIFETIME() {
+        return LIFETIME;
+    }
+
+    public boolean died() {
+        return getLIFETIME() <= 0;
+    }
+
+    @Override
+    public void tick(TimeLapse timeLapse) {
+
+    }
+
+    @Override
+    public void afterTick(TimeLapse timeLapse) {
+        if(LIFETIME <= 0)
+            return;
+        LIFETIME--;
+    }
+
+
 }

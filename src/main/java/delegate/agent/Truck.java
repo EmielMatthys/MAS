@@ -10,7 +10,7 @@ public class Truck extends Vehicle {
     private static final int VEHICLE_CAPACITY = 1;
 
 
-    protected Truck(Point startPos) {
+    public Truck(Point startPos) {
         super(VehicleDTO.builder()
                 .speed(VEHICLE_SPEED)
                 .capacity(VEHICLE_CAPACITY)

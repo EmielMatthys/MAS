@@ -1,12 +1,17 @@
 package delegate.model;
 
+import com.github.rinde.rinsim.core.Simulator;
+import com.github.rinde.rinsim.core.SimulatorAPI;
+import com.github.rinde.rinsim.core.SimulatorUser;
 import com.github.rinde.rinsim.core.model.DependencyProvider;
 import com.github.rinde.rinsim.core.model.Model.AbstractModel;
 import com.github.rinde.rinsim.core.model.ModelBuilder.AbstractModelBuilder;
+import com.github.rinde.rinsim.core.model.road.RoadModel;
 import com.github.rinde.rinsim.core.model.time.TickListener;
 import com.github.rinde.rinsim.core.model.time.TimeLapse;
 import com.github.rinde.rinsim.geom.Point;
 import com.google.auto.value.AutoValue;
+import delegate.ant.Ant;
 import delegate.ant.pheromone.Pheromone;
 
 import java.lang.reflect.Array;
@@ -15,17 +20,22 @@ import java.util.*;
 /**
  *
  */
-public class DMASModel extends AbstractModel<DMASUser> implements TickListener {
+public class DMASModel extends AbstractModel<DMASUser> implements TickListener, SimulatorUser {
 
 
-//    Map<Point, List<Pheromone>> pheromones;
+    RoadModel rm;
     List<Pheromone> pheromones;
+    List<Ant> ants;
 
-    public DMASModel() {
+    SimulatorAPI simulator;
+
+    public DMASModel(RoadModel rm) {
         this.pheromones = new ArrayList<>();
+        this.ants = new ArrayList<>();
+        this.rm = rm;
     }
 
-    public void dropPheromone(Point location, Pheromone pheromone){
+    public void dropPheromone(Pheromone pheromone){
         if(!pheromones.contains(pheromone)){
             pheromones.add(pheromone);
         }
@@ -43,12 +53,18 @@ public class DMASModel extends AbstractModel<DMASUser> implements TickListener {
 
     @Override
     public boolean register(DMASUser element) {
+        if(element instanceof Ant)
+            ants.add((Ant) element);
+
         return element.initialize(this);
     }
 
     @Override
     public boolean unregister(DMASUser element) {
-
+        if(element instanceof Ant)
+            ants.remove(element);
+        else if(element instanceof Pheromone)
+            pheromones.remove(element);
         return true;
     }
 
@@ -61,27 +77,45 @@ public class DMASModel extends AbstractModel<DMASUser> implements TickListener {
     @Override
     public void afterTick(TimeLapse timeLapse) {
         updatePheromones();
+        updateAnts();
+    }
+
+    private void updateAnts() {
+        for(Ant ant : ants){
+            if (ant.died())
+                simulator.unregister(ant);
+
+        }
     }
 
     private void updatePheromones() {
-        Set<Pheromone> toRemove = new HashSet<>();
         for(Pheromone ph : pheromones){
             if (ph.disappeared())
-                toRemove.add(ph);
+                simulator.unregister(ph);
+
         }
-        pheromones.removeAll(toRemove);
     }
 
     public static Builder builder(){
         return new AutoValue_DMASModel_Builder();
     }
 
+    @Override
+    public void setSimulator(SimulatorAPI api) {
+        simulator = api;
+    }
+
     @AutoValue
     public static class Builder extends AbstractModelBuilder<DMASModel, DMASUser>{
 
+        public Builder(){
+            setDependencies(RoadModel.class);
+        }
+
         @Override
         public DMASModel build(DependencyProvider dependencyProvider) {
-            return new DMASModel();
+            RoadModel rm = dependencyProvider.get(RoadModel.class);
+            return new DMASModel(rm);
         }
     }
 }
