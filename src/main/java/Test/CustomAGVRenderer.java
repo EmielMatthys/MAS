@@ -22,7 +22,7 @@ public class CustomAGVRenderer extends CanvasRenderer.AbstractCanvasRenderer {
     static final int X_OFFSET = -5;
     static final int Y_OFFSET = -30;
 
-    enum Language {
+    public enum Language {
         DUTCH("INSTAPPEN", "UITSTAPPEN"), ENGLISH("EMBARK", "DISEMBARK");
 
         final String embark;
@@ -96,7 +96,7 @@ public class CustomAGVRenderer extends CanvasRenderer.AbstractCanvasRenderer {
         }
     }
 
-    static Builder builder(Language l) {
+    public static Builder builder(Language l) {
         return new AutoValue_CustomAGVRenderer_Builder(l);
     }
 

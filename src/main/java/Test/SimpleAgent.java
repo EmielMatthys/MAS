@@ -19,6 +19,7 @@ import com.google.common.collect.ImmutableList;
 import org.apache.commons.math3.random.RandomGenerator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import sun.java2d.pipe.SpanShapeRenderer;
 
 import java.util.LinkedList;
 import java.util.List;
@@ -45,7 +46,7 @@ public class SimpleAgent extends Vehicle implements TickListener, MovingRoadUser
 
     private final double range;
 
-    SimpleAgent(RandomGenerator rng, Point initialPosition) {
+    public SimpleAgent(RandomGenerator rng, Point initialPosition) {
         super(VehicleDTO.builder()
                 .startPosition(initialPosition)
                 .speed(VEHICLE_SPEED)
@@ -59,6 +60,20 @@ public class SimpleAgent extends Vehicle implements TickListener, MovingRoadUser
         device = Optional.absent();
         destination = Optional.absent();
         current = Optional.absent();
+    }
+
+    public SimpleAgent(RandomGenerator rng, VehicleDTO dto) {
+        super(dto);
+        this.rng = rng;
+        path = new LinkedList<>();
+        this.range = 5;
+        device = Optional.absent();
+        destination = Optional.absent();
+        current = Optional.absent();
+    }
+
+    public void setLocation(Point loc) {
+        super.setStartPosition(loc);
     }
 
     @Override
@@ -93,6 +108,8 @@ public class SimpleAgent extends Vehicle implements TickListener, MovingRoadUser
             if (rm.getPosition(this).equals(destination.get())) {
                 nextDestination(rm);
             }
+
+
 
             // Check for incoming messages
             if(device.get().getUnreadCount() > 0){
