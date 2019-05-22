@@ -22,10 +22,9 @@ public class Truck extends Vehicle implements TickListener, MovingRoadUser {
     private RandomGenerator rng;
     private Simulator sim;
 
+
     //Temp to give with Intention Ant
     private Optional<Point> destination;
-
-    private List<Ant> ants = new ArrayList<>();
 
     boolean first = true;
 
@@ -42,25 +41,30 @@ public class Truck extends Vehicle implements TickListener, MovingRoadUser {
 
     @Override
     protected void tickImpl(TimeLapse time) {
-        if (first) {
-            rng.nextDouble();
-            this.destination = Optional.of(getRoadModel().getRandomPosition(rng));
-            IntentionAnt ant = new IntentionAnt(getRoadModel().getPosition(this), this, this.destination.get());
-            sim.register(ant);
-            ants.add(ant);
-            first = false;
+
+        if (!destination.isPresent()) {
+            destination = Optional.of(getRoadModel().getRandomPosition(rng));
         }
+
+        spawnIntentionAnt();
+
         if (!time.hasTimeLeft()) {
             return;
         }
-
+        //TODO: MOET BEWEGEN VOLGENS PATH VAN EXPLORATIONANT
         getRoadModel().moveTo(this, destination.get(), time);
-
-
     }
 
-    public void notify(boolean otherPheromone, Ant ant) {
-        ants.remove(ant);
-        sim.unregister(ant);
+    private void spawnIntentionAnt() {
+        IntentionAnt ant = new IntentionAnt(getRoadModel().getPosition(this), this, this.destination.get());
+        try {
+            sim.register(ant);
+        } catch (IllegalArgumentException e) {
+
+        }
+    }
+
+    public void notify(boolean otherPheromone) {
+        System.out.println("OTHER PHEROMONE: " + otherPheromone);
     }
 }
