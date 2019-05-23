@@ -5,13 +5,16 @@ import com.github.rinde.rinsim.core.model.road.RoadModel;
 import com.github.rinde.rinsim.core.model.time.TickListener;
 import com.github.rinde.rinsim.core.model.time.TimeLapse;
 import com.github.rinde.rinsim.geom.Point;
+import delegate.LocationAgent;
+import delegate.agent.Package;
+import delegate.agent.Truck;
 import delegate.model.DMASModel;
 import delegate.model.DMASUser;
 
 public abstract class Ant implements DMASUser, MovingRoadUser, TickListener {
 
-    private static double SPEED = 2;
-    protected int LIFETIME = 200;
+    private static double SPEED = 1;
+    protected int LIFETIME = 300;
 
     protected DMASModel dmasModel;
     protected RoadModel roadModel;
@@ -61,6 +64,9 @@ public abstract class Ant implements DMASUser, MovingRoadUser, TickListener {
         LIFETIME--;
     }
 
+
+    public void visit(Package t){}
+    public void visit(LocationAgent t){}
 
     protected RoadModel getRoadModel() {
         return roadModel;
