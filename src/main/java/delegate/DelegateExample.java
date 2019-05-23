@@ -9,6 +9,7 @@ import com.github.rinde.rinsim.core.model.road.RoadModel;
 import com.github.rinde.rinsim.core.model.road.RoadModelBuilders;
 import com.github.rinde.rinsim.core.model.time.TickListener;
 import com.github.rinde.rinsim.core.model.time.TimeLapse;
+import com.github.rinde.rinsim.geom.Point;
 import com.github.rinde.rinsim.ui.View;
 import com.github.rinde.rinsim.ui.renderers.GraphRoadModelRenderer;
 import com.github.rinde.rinsim.ui.renderers.RoadUserRenderer;
@@ -25,12 +26,11 @@ import org.eclipse.swt.graphics.RGB;
 
 import javax.measure.unit.NonSI;
 import javax.measure.unit.SI;
-import java.awt.*;
 import java.util.Set;
 
 public class DelegateExample {
 
-    private static final int MAX_PACKAGES = 2;
+    private static final int MAX_PACKAGES = 3;
 
     public static void main(String[] args) {
         run();
@@ -42,7 +42,7 @@ public class DelegateExample {
 //                        .withMargin(VEHICLE_LENGTH))
 //                .with(AGVRenderer.builder()
 //                        .withDifferentColorsForVehicles())
-                .with(GraphRoadModelRenderer.builder())
+                .with(GraphRoadModelRenderer.builder().withNodeCircles())
                 .with(RoadUserRenderer.builder()
                         .withImageAssociation(
                                 Package.class, "/graphics/perspective/deliverypackage2.png")
@@ -56,11 +56,11 @@ public class DelegateExample {
                                 IntentionAnt.class, new RGB(255, 0, 0))
                 )
                 ;
-        ;
+
 
         final Simulator sim = Simulator.builder()
                 .addModel(
-                        RoadModelBuilders.staticGraph(AGVExample.GraphCreator.createTestGraph())
+                        RoadModelBuilders.dynamicGraph(AGVExample.GraphCreator.createTestGraph())
 //                                .withCollisionAvoidance()
                                 .withDistanceUnit(SI.METER).withSpeedUnit(NonSI.KILOMETERS_PER_HOUR))
                 .addModel(viewBuilder)
@@ -75,12 +75,37 @@ public class DelegateExample {
         sim.getRandomGenerator().nextDouble();
         sim.getRandomGenerator().nextDouble();
 
-        sim.register(new Truck(rng, sim, rm.getRandomPosition(rng)));
+        Point rand = rm.getRandomPosition(sim.getRandomGenerator());
+        Point pos1 = new Point(32, 76);
+        Point pos2 = new Point(32, 77);
+        Point pos3 = new Point(32, 78);
+
+        Package p1 = new Package(Parcel.builder(rand,
+                rm.getRandomPosition(rng))
+                .buildDTO());
+//
+//        Package p2 = new Package(Parcel.builder(pos2,
+//                rm.getRandomPosition(rng))
+//                .buildDTO());
+//
+//        Package p3 = new Package(Parcel.builder(pos2,
+//                rm.getRandomPosition(rng))
+//                .buildDTO());
+
+        sim.register(p1);
+//        sim.register(p2);
+//        sim.register(p3);
+
+        sim.register(new Truck(rng, rm.getRandomPosition(rng), p1));
 
         for(int i = 0; i < MAX_PACKAGES; i++){
             sim.register(new Package(Parcel.builder(rm.getRandomPosition(rng),
                     rm.getRandomPosition(rng))
                     .buildDTO()));
+            sim.getRandomGenerator().nextDouble();
+            sim.getRandomGenerator().nextDouble();
+            sim.getRandomGenerator().nextDouble();
+            sim.getRandomGenerator().nextDouble();
         }
 
         sim.start();

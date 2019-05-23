@@ -1,14 +1,23 @@
 package delegate.ant;
 
+import com.github.rinde.rinsim.core.model.road.DynamicGraphRoadModel;
 import com.github.rinde.rinsim.core.model.time.TickListener;
 import com.github.rinde.rinsim.core.model.time.TimeLapse;
+import com.github.rinde.rinsim.geom.Connection;
 import com.github.rinde.rinsim.geom.Point;
+import com.google.common.base.Optional;
 import delegate.agent.Package;
 import delegate.ant.pheromone.FeasibilityPheromone;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.Set;
 
 public class FeasibilityAnt extends Ant {
+
+    protected static final Logger LOGGER = LoggerFactory.getLogger(FeasibilityAnt.class);
+    private static final double REQUIRED_DISTANCE_MIN = 0.5;
+
 
     Point destination;
     Package sourcePackage;
@@ -39,10 +48,11 @@ public class FeasibilityAnt extends Ant {
             Point myPos = roadModel.getPosition(this);
 
             // Check if on deliverylocation
-            if (pDest.equals(myPos)){
+            DynamicGraphRoadModel dgrm = (DynamicGraphRoadModel) roadModel;
+            if (Point.distance(myPos, pDest) < REQUIRED_DISTANCE_MIN){
 
                 // Drop pheromone pointing to source on destination location
-                this.dmasModel.dropPheromone(new FeasibilityPheromone(sourcePackage, myPos));
+                this.dmasModel.dropPheromone(new FeasibilityPheromone(sourcePackage, pDest));
             }
         }
 

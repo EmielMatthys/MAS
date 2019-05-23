@@ -11,7 +11,10 @@ import com.github.rinde.rinsim.core.model.time.TickListener;
 import com.github.rinde.rinsim.core.model.time.TimeLapse;
 import com.github.rinde.rinsim.geom.Point;
 import com.google.auto.value.AutoValue;
+import delegate.AntAcceptor;
+import delegate.LocationAgent;
 import delegate.ant.Ant;
+import delegate.ant.pheromone.FeasibilityPheromone;
 import delegate.ant.pheromone.Pheromone;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -25,10 +28,13 @@ import java.util.*;
 public class DMASModel extends AbstractModel<DMASUser> implements TickListener, SimulatorUser {
 
     protected static final Logger LOGGER = LoggerFactory.getLogger(DMASModel.class);
+    private static final double DETECTION_DISTANCE = 0.5;
 
     RoadModel rm;
     List<Pheromone> pheromones;
     List<Ant> ants;
+
+    Map<AntAcceptor, List<Pheromone>> pheromoneMap;
 
     SimulatorAPI simulator;
 
@@ -39,7 +45,6 @@ public class DMASModel extends AbstractModel<DMASUser> implements TickListener, 
     }
 
     public void dropPheromone(Pheromone pheromone){
-        LOGGER.debug("Dropped pheromone " + pheromone.getClass() + " at " + pheromone.getLocation());
         if(!pheromones.contains(pheromone)){
             pheromones.add(pheromone);
         }
@@ -49,7 +54,16 @@ public class DMASModel extends AbstractModel<DMASUser> implements TickListener, 
         ArrayList<Y> result = new ArrayList<>();
 
         for(Pheromone ph : pheromones){
-            if(type.isInstance(ph) && ph.getLocation().equals(location))
+            if(type.isInstance(ph) && Point.distance(ph.getLocation(),location) <= DETECTION_DISTANCE)
+                result.add((Y) ph);
+        }
+        return result;
+    }
+
+    public <Y extends Pheromone> List<Y>  detectPheromone(LocationAgent t, Class<Y> type) {
+        ArrayList<Y> result = new ArrayList<>();
+        for(Pheromone ph : pheromoneMap.get(t)){
+            if(type.isInstance(ph))
                 result.add((Y) ph);
         }
         return result;
@@ -75,7 +89,18 @@ public class DMASModel extends AbstractModel<DMASUser> implements TickListener, 
 
     @Override
     public void tick(TimeLapse timeLapse) {
+        for(Ant ant : ants){
+            for (AntAcceptor acceptor: pheromoneMap.keySet()
+                 ) {
+                if(withinSmellingDistance(ant, acceptor)){
+                    acceptor.accept(ant);
+                }
+            }
+        }
+    }
 
+    private boolean withinSmellingDistance(Ant ant, AntAcceptor acceptor){
+        return  Point.distance(rm.getPosition(ant), rm.getPosition(acceptor)) <= DETECTION_DISTANCE;
     }
 
     @Override
@@ -108,6 +133,14 @@ public class DMASModel extends AbstractModel<DMASUser> implements TickListener, 
     public void setSimulator(SimulatorAPI api) {
         simulator = api;
     }
+
+
+    public boolean addAntAcceptor(AntAcceptor acceptor) {
+        this.pheromoneMap.put(acceptor, new ArrayList<>());
+        return true;
+    }
+
+
 
     @AutoValue
     public static class Builder extends AbstractModelBuilder<DMASModel, DMASUser>{
