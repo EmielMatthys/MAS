@@ -34,6 +34,8 @@ public class SimpleAgent extends Vehicle implements TickListener, MovingRoadUser
     private static final double VEHICLE_SPEED = 1000d;
     private final RandomGenerator rng;
 
+    public long tardiness = 0;
+
     // Roaming stuff
     private Optional<Point> destination;
     private Queue<Point> path;
@@ -150,6 +152,8 @@ public class SimpleAgent extends Vehicle implements TickListener, MovingRoadUser
                 rm.moveTo(this, current.get().getDeliveryLocation(), time);
                 if (rm.getPosition(this).equals(current.get().getDeliveryLocation())) {
                     // deliver when we arrive
+                    tardiness = tardiness + current.get().getDeliveryDuration() + current.get().getPickupDuration();
+                    System.out.println(tardiness);
                     pm.deliver(this, current.get(), time);
                     nextDestination(rm);
                 }

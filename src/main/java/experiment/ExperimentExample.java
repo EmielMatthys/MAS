@@ -12,6 +12,7 @@ import com.github.rinde.rinsim.core.model.road.RoadModelBuilders;
 import com.github.rinde.rinsim.experiment.Experiment;
 import com.github.rinde.rinsim.experiment.ExperimentResults;
 import com.github.rinde.rinsim.experiment.MASConfiguration;
+import com.github.rinde.rinsim.experiment.ResultListener;
 import com.github.rinde.rinsim.geom.ListenableGraph;
 import com.github.rinde.rinsim.geom.Point;
 import com.github.rinde.rinsim.pdptw.common.*;
@@ -91,6 +92,7 @@ public class ExperimentExample {
                         .addModel(StatsTracker.builder())
                         .build())
 
+
                 // Adds the newly constructed scenario to the experiment. Every
                 // configuration will be run on every scenario.
                 .addScenario(createScenario())
@@ -168,8 +170,8 @@ public class ExperimentExample {
             scenario.addEvent(AddParcelEvent.create(Parcel.builder(P1_PICKUP, P1_DELIVERY)
                     .neededCapacity(0)
                     .orderAnnounceTime(M1)
-                    .pickupTimeWindow(TimeWindow.create(M1, M60))
-                    .deliveryTimeWindow(TimeWindow.create(M4, M7))
+                    .pickupTimeWindow(TimeWindow.create(M1, M1))
+                    .deliveryTimeWindow(TimeWindow.create(M1, M1))
                     .buildDTO()));
             M1 = M1 + 60 * 1000L;
         }
@@ -183,7 +185,7 @@ public class ExperimentExample {
 //                                .withCollisionAvoidance()
                         .withDistanceUnit(SI.METER).withSpeedUnit(NonSI.KILOMETERS_PER_HOUR))
                 .addModel(DefaultPDPModel.builder())
-                .setStopCondition(StopConditions.limitedTime(M60));
+                .setStopCondition(CustomStopCondition.vehiclesDone());
         return scenario.build();
     }
 
@@ -211,11 +213,15 @@ public class ExperimentExample {
                 RandomGenerator rng = sim.getRandomGenerator();
                 ListenableGraph graph = AGVExample.GraphCreator.createTestGraph();
 
+                Package p = new Package(event.getParcelDTO());
+
+
+
                 ParcelDTO builder = Parcel.builder(graph.getRandomNode(rng), graph.getRandomNode(rng))
                         .neededCapacity(0)
-                        .orderAnnounceTime(M1)
-                        .pickupTimeWindow(TimeWindow.create(M1, M60))
-                        .deliveryTimeWindow(TimeWindow.create(M4, M7))
+                        .orderAnnounceTime(p.getOrderAnnounceTime())
+                        .pickupTimeWindow(p.getPickupTimeWindow())
+                        .deliveryTimeWindow(p.getDeliveryTimeWindow())
                         .buildDTO();
 
 

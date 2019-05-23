@@ -15,8 +15,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.swing.text.html.Option;
+import java.sql.Time;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.Timer;
 import java.util.stream.Collectors;
 
 public class Package extends Parcel implements CommUser, TickListener, RoadUser {
@@ -31,6 +33,8 @@ public class Package extends Parcel implements CommUser, TickListener, RoadUser 
 
     private static final int TIMEOUT = 200;
     private int timeOutTick = 0;
+
+
 
     enum PackageState {
         BROADCAST, LISTENING, ASSIGNED
@@ -100,6 +104,7 @@ public class Package extends Parcel implements CommUser, TickListener, RoadUser 
 
             }
         }
+
         else if(state == PackageState.ASSIGNED){
             if(timeOutTick <= 0){
                 assigned_truck = Optional.absent();
