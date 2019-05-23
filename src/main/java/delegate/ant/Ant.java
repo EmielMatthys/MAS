@@ -22,6 +22,11 @@ public abstract class Ant implements DMASUser, MovingRoadUser, TickListener {
     protected Point startLocation;
 
 
+    public Ant(Point startLocation, int lifetime) {
+        this.startLocation = startLocation;
+        this.LIFETIME = lifetime;
+    }
+
     public Ant(Point startLocation) {
         this.startLocation = startLocation;
     }
@@ -57,10 +62,20 @@ public abstract class Ant implements DMASUser, MovingRoadUser, TickListener {
 //
 //    }
 
+    private boolean deathMark = false;
+
+    public void markDead(){
+        deathMark = true;
+    }
+
+
+
     @Override
     public final void afterTick(TimeLapse timeLapse) {
         if(LIFETIME <= 0)
             return;
+        else if(deathMark)
+            LIFETIME = 0;
         LIFETIME--;
     }
 

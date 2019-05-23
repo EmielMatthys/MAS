@@ -3,16 +3,18 @@ package delegate;
 import com.github.rinde.rinsim.core.model.road.RoadModel;
 import com.github.rinde.rinsim.core.model.road.RoadUser;
 import com.github.rinde.rinsim.geom.Point;
+import delegate.agent.Package;
 import delegate.ant.Ant;
 import delegate.model.DMASModel;
 
 public class LocationAgent implements AntAcceptor, RoadUser {
 
-    Point location;
+
+    final Package source;
     RoadModel rm;
 
-    public LocationAgent(Point location) {
-        this.location = location;
+    public LocationAgent(Package source) {
+        this.source = source;
     }
 
     @Override
@@ -27,7 +29,7 @@ public class LocationAgent implements AntAcceptor, RoadUser {
 
     @Override
     public void initRoadUser(RoadModel model) {
-        model.addObjectAt(this, location);
+        model.addObjectAt(this, source.getDeliveryLocation());
         rm = model;
     }
 }

@@ -1,15 +1,19 @@
 package delegate.ant.pheromone;
 
-import com.github.rinde.rinsim.geom.Point;
 import delegate.agent.Package;
 
 public class FeasibilityPheromone extends Pheromone {
 
     final Package sourcePackage;
 
-    public FeasibilityPheromone(Package sourcePackage, Point location) {
-        super(location);
+    private final double estimatedTravelTime;
+    private final double estimatedDistance;
+
+    public FeasibilityPheromone(Package sourcePackage, double estimatedTravelTime, double estimatedDistance) {
+        super();
         this.sourcePackage = sourcePackage;
+        this.estimatedTravelTime = estimatedTravelTime;
+        this.estimatedDistance = estimatedDistance;
     }
 
     public Package getSourcePackage() {

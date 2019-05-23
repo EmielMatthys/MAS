@@ -34,7 +34,7 @@ public class Truck extends Vehicle implements TickListener, MovingRoadUser, Simu
 {
     protected static final Logger LOGGER = LoggerFactory.getLogger(Truck.class);
 
-    private static final double VEHICLE_SPEED = 0.2d;
+    public static final double VEHICLE_SPEED = 0.2d;
     private static final int VEHICLE_CAPACITY = 1;
     private static final int HOPS = 1;
     private static final int EXPLORATION_FREQUENCY = 60;
@@ -78,7 +78,40 @@ public class Truck extends Vehicle implements TickListener, MovingRoadUser, Simu
 
     @Override
     protected void tickImpl(TimeLapse time) {
-        // TODO: helemaal begin: geen assigned package
+
+    }
+
+    private void spawnExplorationAnt() {
+
+    }
+
+    private void spawnIntentionAnt() {
+
+    }
+
+    private Plan getBestPlan(List<Plan> plans) {
+        return plans.get(0);
+    }
+
+    public void notify(boolean otherPheromone) {
+        System.out.println("OTHER PHEROMONE: " + otherPheromone);
+    }
+
+    @Override
+    public void setSimulator(SimulatorAPI api) {
+        this.sim = api;
+    }
+
+    public void explorationCallback(Plan plan) {
+
+        plan.getPath().poll();
+        LOGGER.warn("received pheromone callback: first point=" + plan.getPath().peek() + " truck pos="+getRoadModel().getPosition(this));
+        this.plans.add(plan);
+    }
+}
+
+/*
+ // TODO: helemaal begin: geen assigned package
         // TODO: Paths maken
 
         PDPModel pm = getPDPModel();
@@ -131,41 +164,4 @@ public class Truck extends Vehicle implements TickListener, MovingRoadUser, Simu
         //TODO: MOET BEWEGEN VOLGENS PATH VAN EXPLORATIONANT
         if(destination.isPresent())
             getRoadModel().moveTo(this, destination.get(), time);
-    }
-
-    private Plan getBestPlan(List<Plan> plans) {
-        return plans.get(0);
-    }
-
-    private void spawnExplorationAnt() {
-        ExplorationAnt ant = new ExplorationAnt(getRoadModel().getPosition(this), currentPackage.get(), this, HOPS);
-        try{
-            sim.register(ant);
-        }catch (IllegalArgumentException e){}
-    }
-
-    private void spawnIntentionAnt() {
-        IntentionAnt ant = new IntentionAnt(getRoadModel().getPosition(this), this, this.destination.get());
-        try {
-            sim.register(ant);
-        } catch (IllegalArgumentException e) {
-
-        }
-    }
-
-    public void notify(boolean otherPheromone) {
-        System.out.println("OTHER PHEROMONE: " + otherPheromone);
-    }
-
-    @Override
-    public void setSimulator(SimulatorAPI api) {
-        this.sim = api;
-    }
-
-    public void explorationCallback(Plan plan) {
-
-        plan.getPath().poll();
-        LOGGER.warn("received pheromone callback: first point=" + plan.getPath().peek() + " truck pos="+getRoadModel().getPosition(this));
-        this.plans.add(plan);
-    }
-}
+ */

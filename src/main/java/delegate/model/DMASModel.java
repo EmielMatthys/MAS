@@ -13,6 +13,7 @@ import com.github.rinde.rinsim.geom.Point;
 import com.google.auto.value.AutoValue;
 import delegate.AntAcceptor;
 import delegate.LocationAgent;
+import delegate.PheromoneStore;
 import delegate.ant.Ant;
 import delegate.ant.pheromone.FeasibilityPheromone;
 import delegate.ant.pheromone.Pheromone;
@@ -31,40 +32,23 @@ public class DMASModel extends AbstractModel<DMASUser> implements TickListener, 
     private static final double DETECTION_DISTANCE = 0.5;
 
     RoadModel rm;
-    List<Pheromone> pheromones;
+    //List<Pheromone> pheromones;
     List<Ant> ants;
 
-    Map<AntAcceptor, List<Pheromone>> pheromoneMap;
+    Map<AntAcceptor, PheromoneStore> pheromoneMap;
 
     SimulatorAPI simulator;
 
     public DMASModel(RoadModel rm) {
-        this.pheromones = new ArrayList<>();
+        this.pheromoneMap = new HashMap<>();
         this.ants = new ArrayList<>();
         this.rm = rm;
     }
 
-    public void dropPheromone(Pheromone pheromone){
-        if(!pheromones.contains(pheromone)){
-            pheromones.add(pheromone);
-        }
-    }
-
-    public <Y extends Pheromone> List<Y> detectPheromone(Point location, Class<Y> type){
+    public <Y extends Pheromone> List<Y>  detectPheromone(AntAcceptor t, Class<Y> type) {
         ArrayList<Y> result = new ArrayList<>();
-
-        for(Pheromone ph : pheromones){
-            if(type.isInstance(ph) && Point.distance(ph.getLocation(),location) <= DETECTION_DISTANCE)
-                result.add((Y) ph);
-        }
-        return result;
-    }
-
-    public <Y extends Pheromone> List<Y>  detectPheromone(LocationAgent t, Class<Y> type) {
-        ArrayList<Y> result = new ArrayList<>();
-        for(Pheromone ph : pheromoneMap.get(t)){
-            if(type.isInstance(ph))
-                result.add((Y) ph);
+        for(AntAcceptor a : pheromoneMap.keySet()){
+            result.addAll(pheromoneMap.get(a).detectPheromone(type));
         }
         return result;
     }
@@ -81,11 +65,11 @@ public class DMASModel extends AbstractModel<DMASUser> implements TickListener, 
     public boolean unregister(DMASUser element) {
         if(element instanceof Ant)
             ants.remove(element);
-        else if(element instanceof Pheromone)
-            pheromones.remove(element);
+        else if(element instanceof AntAcceptor)
+            pheromoneMap.remove(element);
+
         return true;
     }
-
 
     @Override
     public void tick(TimeLapse timeLapse) {
@@ -118,11 +102,10 @@ public class DMASModel extends AbstractModel<DMASUser> implements TickListener, 
     }
 
     private void updatePheromones() {
-        for(Pheromone ph : pheromones){
-            if (ph.disappeared())
-                simulator.unregister(ph);
-
+        for(PheromoneStore ps : pheromoneMap.values()){
+            ps.update();
         }
+
     }
 
     public static Builder builder(){
@@ -136,10 +119,14 @@ public class DMASModel extends AbstractModel<DMASUser> implements TickListener, 
 
 
     public boolean addAntAcceptor(AntAcceptor acceptor) {
-        this.pheromoneMap.put(acceptor, new ArrayList<>());
+        this.pheromoneMap.put(acceptor, new PheromoneStore());
         return true;
     }
 
+    public void dropPheromone(AntAcceptor t, Pheromone pheromone) {
+        pheromoneMap.get(t).add(pheromone);
+        simulator.register(pheromone);
+    }
 
 
     @AutoValue

@@ -15,15 +15,13 @@ public class Pheromone implements TickListener {
 
 //    RoadModel roadModel;
 
-    Point location;
 
-    public Pheromone(long lifetime, Point location) {
+    public Pheromone(long lifetime) {
         this.lifetime = lifetime;
-        this.location = location;
     }
 
-    public Pheromone(Point location) {
-        this(DEFAULT_LIFETIME, location);
+    public Pheromone() {
+        this(DEFAULT_LIFETIME);
     }
 
     public boolean disappeared(){
@@ -39,13 +37,4 @@ public class Pheromone implements TickListener {
     @Override
     public void afterTick(TimeLapse timeLapse) {}
 
-//    @Override
-//    public void initRoadUser(RoadModel model) {
-//        this.roadModel = roadModel;
-//        roadModel.addObjectAt(this, location);
-//    }
-
-    public Point getLocation() {
-        return location; // Doesnt move so always the same
-    }
 }

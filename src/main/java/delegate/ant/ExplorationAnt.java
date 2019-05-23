@@ -9,6 +9,7 @@ import delegate.Plan;
 import delegate.agent.Package;
 import delegate.agent.Truck;
 import delegate.ant.pheromone.FeasibilityPheromone;
+import delegate.ant.pheromone.IntentionPheromone;
 import delegate.ant.pheromone.Pheromone;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -30,11 +31,15 @@ public class ExplorationAnt extends Ant implements Cloneable, SimulatorUser {
 
     private Package aPackage;
 
+    private Point destination;
+
     private Plan plan;
 
     private static final int CLONE_MAX = 5;
 
-    private boolean first = false;
+
+    private double estimatedArrival;
+
 
     public ExplorationAnt(Point startLocation, Package aPackage, ExplorationState state, Truck truck, int hops) {
         super(startLocation);
@@ -44,6 +49,7 @@ public class ExplorationAnt extends Ant implements Cloneable, SimulatorUser {
         this.truck = truck;
         this.hops = hops;
 
+        this.destination = aPackage.getPickupLocation();
         this.state = state;
 
         this.plan = new Plan(truck);
@@ -55,13 +61,64 @@ public class ExplorationAnt extends Ant implements Cloneable, SimulatorUser {
 
     @Override
     public void tick(TimeLapse timeLapse) {
-        /*
-        1. go to starting point until reached
-        2. smell for pheromones
-        3. hops--; if hops > 0 : split this ant for each pheromone with new starting point as destination of package
-        4. if hops == 0, report path to truck
-         */
-        Point currentLocation = getRoadModel().getPosition(this);
+
+
+
+    }
+
+    public void setState(ExplorationState state) {
+        this.state = state;
+    }
+
+    @Override
+    public void setSimulator(SimulatorAPI api) {
+        this.sim = api;
+    }
+
+    @Override
+    public void visit(LocationAgent t) {
+        // Detect feasibility pheromones
+        // for each -> send exploration ant to the package source location
+        // if hops == 0 --> stop
+        List<FeasibilityPheromone> feasibilityPheromones = getDmasModel().detectPheromone(t, FeasibilityPheromone.class);
+
+
+    }
+
+    @Override
+    public void visit(Package t) {
+        // Detect intention pheromones
+        // if found --> stop looking
+        // else --> go to destination
+
+        if(!t.equals(aPackage))
+            return;
+
+        List<IntentionPheromone> intentionPheromones = getDmasModel().detectPheromone(t, IntentionPheromone.class);
+
+        if(!intentionPheromones.isEmpty()) {
+            markDead();
+            return;
+        }
+
+        destination = aPackage.getDeliveryLocation();
+
+    }
+
+    @Override
+    protected Object clone() throws CloneNotSupportedException {
+        return super.clone(); //TODO
+    }
+
+    public enum ExplorationState{
+        TO_DELIVERY_LOCATION, TO_PACKAGE_SOURCE
+    }
+}
+
+
+
+/*
+ Point currentLocation = getRoadModel().getPosition(this);
 
 
         // Are we going to deliverylocation of package?
@@ -107,42 +164,4 @@ public class ExplorationAnt extends Ant implements Cloneable, SimulatorUser {
             else if(timeLapse.hasTimeLeft())
                 getRoadModel().moveTo(this, aPackage.getPickupLocation(), timeLapse);
         }
-
-    }
-
-    public void setState(ExplorationState state) {
-        this.state = state;
-    }
-
-    @Override
-    public void setSimulator(SimulatorAPI api) {
-        this.sim = api;
-    }
-
-    @Override
-    public void visit(LocationAgent t) {
-        List<FeasibilityPheromone> pheromones = getDmasModel().detectPheromone(t, FeasibilityPheromone.class);
-
-        if(pheromones.isEmpty())
-            hops = 0;
-
-        int i = 0;
-        for(FeasibilityPheromone p : pheromones){
-            if(i++ > CLONE_MAX){
-                return;
-            }
-
-            ExplorationAnt newAnt = new ExplorationAnt(
-                    getRoadModel().getPosition(this), // our current location
-                    p.getSourcePackage(),
-                    ExplorationState.TO_PACKAGE_SOURCE,
-                    truck,
-                    hops
-            )
-        }
-    }
-
-    public enum ExplorationState{
-        TO_DELIVERY_LOCATION, TO_PACKAGE_SOURCE
-    }
-}
+ */

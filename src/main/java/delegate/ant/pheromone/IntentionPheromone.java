@@ -8,7 +8,7 @@ public class IntentionPheromone extends Pheromone {
     private Truck truck;
 
     public IntentionPheromone(long lifetime, Point location, Truck truck) {
-        super(lifetime, location);
+        super(lifetime);
         this.truck = truck;
     }
 

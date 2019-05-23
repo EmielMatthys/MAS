@@ -11,6 +11,7 @@ import com.github.rinde.rinsim.core.model.time.TickListener;
 import com.github.rinde.rinsim.core.model.time.TimeLapse;
 import com.github.rinde.rinsim.geom.Point;
 import delegate.AntAcceptor;
+import delegate.LocationAgent;
 import delegate.ant.Ant;
 import delegate.ant.FeasibilityAnt;
 import delegate.model.DMASModel;
@@ -26,16 +27,21 @@ public class Package extends Parcel implements TickListener, RoadUser, Simulator
     private SimulatorAPI sim;
 
     private static final int FEAS_ANT_INTERVAL = 50;
+    private static final int FEAS_ANT_COUNT = 4;
     private int ant_tick = 0;
+
+    private final LocationAgent locationAgent;
 
 
     public Package(ParcelDTO parcelDto) {
         super(parcelDto);
+        locationAgent = new LocationAgent(this);
     }
 
     @Override
     public void tick(TimeLapse timeLapse) {
         if(getPDPModel().getParcelState(this).isPickedUp() || getPDPModel().getParcelState(this).isDelivered()){
+            sim.unregister(locationAgent);
             sim.unregister(this);
             return;
         }
@@ -43,16 +49,10 @@ public class Package extends Parcel implements TickListener, RoadUser, Simulator
         if (ant_tick == FEAS_ANT_INTERVAL) {
             RoadModel rm = getRoadModel();
 
-            FeasibilityAnt ant1 = new FeasibilityAnt(rm.getPosition(this), rm.getRandomPosition(sim.getRandomGenerator()), this);
-            FeasibilityAnt ant2 = new FeasibilityAnt(rm.getPosition(this), rm.getRandomPosition(sim.getRandomGenerator()), this);
-            FeasibilityAnt ant3 = new FeasibilityAnt(rm.getPosition(this), rm.getRandomPosition(sim.getRandomGenerator()), this);
-            FeasibilityAnt ant4 = new FeasibilityAnt(rm.getPosition(this), rm.getRandomPosition(sim.getRandomGenerator()), this);
-
-
-            sim.register(ant1);
-            sim.register(ant2);
-            sim.register(ant3);
-            sim.register(ant4);
+            for(int i = 0; i < FEAS_ANT_COUNT;i++){
+                FeasibilityAnt ant = new FeasibilityAnt(this, rm.getRandomPosition(sim.getRandomGenerator()));
+                sim.register(ant);
+            }
 
             ant_tick = 0;
         }
@@ -69,6 +69,7 @@ public class Package extends Parcel implements TickListener, RoadUser, Simulator
     @Override
     public void setSimulator(SimulatorAPI api) {
         this.sim = api;
+        sim.register(locationAgent);
     }
 
     @Override
@@ -79,5 +80,9 @@ public class Package extends Parcel implements TickListener, RoadUser, Simulator
     @Override
     public boolean initialize(DMASModel dmasModel) {
         return true;
+    }
+
+    public LocationAgent getLocationAgent() {
+        return locationAgent;
     }
 }
