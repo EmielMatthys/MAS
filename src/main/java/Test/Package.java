@@ -51,6 +51,10 @@ public class Package extends Parcel implements CommUser, TickListener, RoadUser 
         }
     }
 
+    public void setLocation(Point loc) {
+        super.setStartPosition(loc);
+    }
+
     @Override
     public void setCommDevice(CommDeviceBuilder builder) {
         this.device = Optional.of(builder.
