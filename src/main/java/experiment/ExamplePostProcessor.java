@@ -17,34 +17,18 @@ import java.util.Set;
 
 
 public class ExamplePostProcessor implements PostProcessor<String> {
+    private int NUM_AGVS;
 
-
-    ExamplePostProcessor() {}
+    ExamplePostProcessor(int agv) {
+        this.NUM_AGVS = agv;
+    }
 
     @Override
     public String collectResults(Simulator sim, Experiment.SimArgs args) {
-        try {
-            FileReader fr = new FileReader("pickuptimes.txt");
-            BufferedReader reader = new BufferedReader(fr);
-
-            FileWriter fw = new FileWriter("pickuptimes.txt");
-            BufferedWriter writer = new BufferedWriter((fw));
-            List<Model<?>> models = sim.getModels().asList();
-
-            while (reader.readLine() != null) { }
-
-
-
-
-        } catch (IOException e) {
-
-        }
-
-        Set<Model<?>> models = sim.getModels();
-
         long delT = 0;
         long pickT = 0;
 
+        List<Model<?>> models = sim.getModels().asList();
         for (Model<?> model : models ) {
             if (model instanceof StatsTracker) {
                 delT = ((StatsTracker) model).getStatistics().deliveryTardiness;
@@ -52,27 +36,40 @@ public class ExamplePostProcessor implements PostProcessor<String> {
             }
         }
 
-        final Set<SimpleAgent> vehicles = sim.getModelProvider()
-                .getModel(RoadModel.class).getObjectsOfType(SimpleAgent.class);
+        try {
 
-        final Set<Package> packages = sim.getModelProvider()
-                .getModel(RoadModel.class).getObjectsOfType(Package.class);
+            FileWriter fwPick = new FileWriter("pickuptimes_" + NUM_AGVS + ".txt", true);
+            BufferedWriter writerPick = new BufferedWriter(fwPick);
+            FileWriter fwDel = new FileWriter("deliverytimes_" + NUM_AGVS +".txt", true);
+            BufferedWriter writerDel = new BufferedWriter(fwDel);
 
-        long avgTardiness = 0;
 
-        for (SimpleAgent vehicle: vehicles) {
-            avgTardiness = avgTardiness + vehicle.tardiness;
+            final StringBuilder sbPick = new StringBuilder();
+            sbPick.append(delT);
+
+            writerPick.write(sbPick.toString());
+            writerPick.newLine();
+
+            final StringBuilder sbDel = new StringBuilder();
+            sbDel.append(pickT);
+            writerDel.newLine();
+
+
+
+            writerPick.close();
+            fwPick.close();
+            writerDel.close();
+            fwDel.close();
+
+        } catch (IOException e) {
+
         }
-
-        avgTardiness = avgTardiness / 20;
-
 
 
         // Construct a result string based on the simulator state, of course, in
         // actual code the result should not be a string but a value object
         // containing the values of interest.
         final StringBuilder sb = new StringBuilder();
-        //sb.append("Average Tardiness: ").append(avgTardiness);
         sb.append("DeliveryTardiness: ").append(delT);
         sb.append(" PickupTardiness: ").append(pickT);
 
