@@ -4,6 +4,7 @@ import com.github.rinde.rinsim.core.SimulatorAPI;
 import com.github.rinde.rinsim.core.SimulatorUser;
 import com.github.rinde.rinsim.core.model.time.TimeLapse;
 import com.github.rinde.rinsim.geom.Point;
+import com.google.common.base.Optional;
 import delegate.LocationAgent;
 import delegate.Plan;
 import delegate.agent.Package;
@@ -15,9 +16,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.List;
+
 import java.util.Set;
 
-public class ExplorationAnt extends Ant implements Cloneable, SimulatorUser {
+public class ExplorationAnt extends Ant implements SimulatorUser {
 
     protected static final Logger LOGGER = LoggerFactory.getLogger(ExplorationAnt.class);
 
@@ -25,11 +27,9 @@ public class ExplorationAnt extends Ant implements Cloneable, SimulatorUser {
 
     private Truck truck;
 
-    private ExplorationState state;
-
     private SimulatorAPI sim;
 
-    private Package aPackage;
+    private Optional<Package> aPackage;
 
     private Point destination;
 
@@ -41,33 +41,59 @@ public class ExplorationAnt extends Ant implements Cloneable, SimulatorUser {
     private double estimatedArrival;
 
 
-    public ExplorationAnt(Point startLocation, Package aPackage, ExplorationState state, Truck truck, int hops) {
+    /**
+     * Instantiate ExplorationAnt. Will start moving to package pickup location.
+     * @param startLocation spawn location
+     * @param aPackage package
+     * @param truck truck to report to
+     * @param hops hops
+     */
+    public ExplorationAnt(Point startLocation, Package aPackage, Truck truck, int hops) {
         super(startLocation);
         this.LIFETIME = Integer.MAX_VALUE;
-        //.destination = destination;
-        this.aPackage = aPackage;
+        this.aPackage = Optional.of(aPackage);
         this.truck = truck;
         this.hops = hops;
 
         this.destination = aPackage.getPickupLocation();
-        this.state = state;
 
         this.plan = new Plan(truck);
     }
 
-    public ExplorationAnt(Point startLocation, Package aPackage, Truck truck, int hops){
-        this(startLocation, aPackage, ExplorationState.TO_DELIVERY_LOCATION, truck, hops);
+    /**
+     * Instantiate ExplorationAnt with forced destination. To be used when spawned by truck isntead of old exploration ant
+     * @param startLocation spawn
+     * @param aPackage source package
+     * @param truck truck to report to
+     * @param hops hops
+     * @param destination forced destination
+     */
+    public ExplorationAnt(Point startLocation, Package aPackage, Truck truck, int hops, Point destination) {
+        this(startLocation, aPackage, truck, hops);
+        this.destination = destination;
+    }
+
+    public ExplorationAnt(Point startLocation, Truck truck, int hops, Point randomDest) {
+        super(startLocation, 200);
+        this.LIFETIME = Integer.MAX_VALUE; //TODO HIER ZIT LIFETIME FOUT
+        this.aPackage = Optional.absent();
+        this.truck = truck;
+        this.hops = hops;
+
+        this.destination = randomDest;
+
+        this.plan = new Plan(truck);
+
     }
 
     @Override
     public void tick(TimeLapse timeLapse) {
-
-
-
-    }
-
-    public void setState(ExplorationState state) {
-        this.state = state;
+        if(!roadModel.containsObjectAt(this, destination)){
+            roadModel.moveTo(this, destination, timeLapse);
+        }
+        else{
+            getLIFETIME();
+        }
     }
 
     @Override
@@ -77,12 +103,31 @@ public class ExplorationAnt extends Ant implements Cloneable, SimulatorUser {
 
     @Override
     public void visit(LocationAgent t) {
-        // Detect feasibility pheromones
-        // for each -> send exploration ant to the package source location
-        // if hops == 0 --> stop
+        if(this.deathMark || LIFETIME == 0)
+            return;
+
         List<FeasibilityPheromone> feasibilityPheromones = getDmasModel().detectPheromone(t, FeasibilityPheromone.class);
+        if(feasibilityPheromones.isEmpty()) {
+            hops = 0;
+            LIFETIME = 0;
+            return;
+        }
 
+        if(hops-- <= 0){
+            //TODO report path to truck
+        }
+        else{
+            int i = 0;
+            for(FeasibilityPheromone p : feasibilityPheromones){
+                if(i++ > CLONE_MAX)
+                    break;
 
+                ExplorationAnt ant = new ExplorationAnt(t.getPosition(), p.getSourcePackage(), truck, hops);
+                sim.register(ant);
+            }
+        }
+
+        LIFETIME = 0;
     }
 
     @Override
@@ -91,7 +136,12 @@ public class ExplorationAnt extends Ant implements Cloneable, SimulatorUser {
         // if found --> stop looking
         // else --> go to destination
 
-        if(!t.equals(aPackage))
+        if(!aPackage.isPresent()){
+            // Truck has no package yet, make this the new one
+            aPackage = aPackage.of(t);
+        }
+
+        if(!t.equals(aPackage.get()))
             return;
 
         List<IntentionPheromone> intentionPheromones = getDmasModel().detectPheromone(t, IntentionPheromone.class);
@@ -101,18 +151,10 @@ public class ExplorationAnt extends Ant implements Cloneable, SimulatorUser {
             return;
         }
 
-        destination = aPackage.getDeliveryLocation();
+        destination = aPackage.get().getDeliveryLocation();
 
     }
 
-    @Override
-    protected Object clone() throws CloneNotSupportedException {
-        return super.clone(); //TODO
-    }
-
-    public enum ExplorationState{
-        TO_DELIVERY_LOCATION, TO_PACKAGE_SOURCE
-    }
 }
 
 

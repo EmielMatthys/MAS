@@ -62,7 +62,7 @@ public abstract class Ant implements DMASUser, MovingRoadUser, TickListener {
 //
 //    }
 
-    private boolean deathMark = false;
+    protected boolean deathMark = false;
 
     public void markDead(){
         deathMark = true;

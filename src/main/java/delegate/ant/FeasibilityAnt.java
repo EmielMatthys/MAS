@@ -49,7 +49,7 @@ public class FeasibilityAnt extends Ant {
 
     @Override
     public void visit(LocationAgent t) {
-        LOGGER.warn(this + " visiting LocationAgent "+ t);
+        LOGGER.debug(this + " visiting LocationAgent "+ t);
 
         Measure<Double, ?> distance = TravelDistanceHelper.calcShortestTravelDistance(roadModel, startLocation, this);
 

@@ -50,4 +50,27 @@ public class TravelDistanceHelper {
         Measure<Double, Length> distance = rm.getDistanceOfPath(path);
         return distance;
     }
+
+    public static Point getNearestNode(RoadUser roadUser, RoadModel rm){
+        if(!GraphRoadModel.class.isInstance(rm))
+            throw new IllegalArgumentException("RoadModel has to be graphroadmodel");
+
+        Optional<? extends Connection<?>> userConnection = ((GraphRoadModel)rm).getConnection(roadUser);
+        Point userPos = rm.getPosition(roadUser);
+
+        if(!userConnection.isPresent()){
+            // User already on node
+            return userPos;
+        }
+        else{
+            Point from = userConnection.get().from();
+            Point to = userConnection.get().to();
+
+
+            if(Point.distance(userPos, from) < Point.distance(userPos, to))
+                return from;
+            else
+                return to;
+        }
+    }
 }

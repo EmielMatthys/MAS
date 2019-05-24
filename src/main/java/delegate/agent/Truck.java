@@ -22,7 +22,10 @@ import delegate.ant.ExplorationAnt;
 import delegate.ant.IntentionAnt;
 import delegate.ant.pheromone.FeasibilityPheromone;
 import delegate.ant.pheromone.Pheromone;
+import delegate.util.TravelDistanceHelper;
+import org.apache.commons.math3.analysis.function.Exp;
 import org.apache.commons.math3.random.RandomGenerator;
+import org.eclipse.swt.graphics.Path;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -38,7 +41,8 @@ public class Truck extends Vehicle implements TickListener, MovingRoadUser, Simu
     private static final int VEHICLE_CAPACITY = 1;
     private static final int HOPS = 1;
     private static final int EXPLORATION_FREQUENCY = 60;
-    private int tick = 0;
+    private int exp_tick = 0;
+    private int int_tick = 0;
 
     private RandomGenerator rng;
     private SimulatorAPI sim;
@@ -49,6 +53,8 @@ public class Truck extends Vehicle implements TickListener, MovingRoadUser, Simu
     private Optional<Point> destination;
 
     private List<Plan> plans;
+
+    private Optional<Path> path;
 
 
     public Truck(RandomGenerator rng, Point startPos) {
@@ -64,38 +70,76 @@ public class Truck extends Vehicle implements TickListener, MovingRoadUser, Simu
         this.plans = new ArrayList<>();
     }
 
-    public Truck(RandomGenerator rng, Point startPos, Point destination){
-        this(rng, startPos);
-
-        this.destination = Optional.of(destination);
-    }
 
     public Truck(RandomGenerator rng, Point startPos, Package p){
         this(rng, startPos);
 
         this.currentPackage = Optional.of(p);
+        path = Optional.absent();
     }
 
     @Override
     protected void tickImpl(TimeLapse time) {
+        RoadModel rm = getRoadModel();
+        PDPModel pm = getPDPModel();
 
+        spawnExplorationAnt();
+
+        //TODO Truck should always follow a path
+
+        if(currentPackage.isPresent()){
+            final boolean inCargo = pm.containerContains(this, currentPackage.get());
+            // sanity check: if it is not in our cargo AND it is also not on the
+            // RoadModel, we cannot go to curr anymore.
+            if (!inCargo && !rm.containsObject(currentPackage.get())) {
+                currentPackage = Optional.absent();
+            }
+            else if (inCargo) {
+                rm.moveTo(this, currentPackage.get().getDeliveryLocation(), time);
+                if (rm.getPosition(this).equals(currentPackage.get().getDeliveryLocation())) {
+                    // deliver when we arrive
+                    pm.deliver(this, currentPackage.get(), time);
+                }
+            } else {
+                // it is still available, go there as fast as possible
+                rm.moveTo(this, currentPackage.get(), time);
+                if (rm.equalPosition(this, currentPackage.get())) {
+                    // pickup customer
+                    pm.pickup(this, currentPackage.get(), time);
+                }
+            }
+        }
     }
 
     private void spawnExplorationAnt() {
+        if(++exp_tick < EXPLORATION_FREQUENCY)
+            return;
 
+        exp_tick = 0;
+
+        Point spawnLocation = TravelDistanceHelper.getNearestNode(this, getRoadModel());
+
+        if(currentPackage.isPresent() && getPDPModel().containerContains(this, currentPackage.get())){
+
+            ExplorationAnt ant = new ExplorationAnt(spawnLocation, currentPackage.get(), this, HOPS, currentPackage.get().getDeliveryLocation());
+            sim.register(ant);
+        }
+        else if(currentPackage.isPresent()){
+            ExplorationAnt ant = new ExplorationAnt(spawnLocation, currentPackage.get(), this, HOPS);
+            sim.register(ant);
+        }
+        else{
+            // No current package --> random exploration
+            ExplorationAnt ant = new ExplorationAnt(spawnLocation,this, 1, getRoadModel().getRandomPosition(rng));
+            sim.register(ant);
+        }
     }
 
     private void spawnIntentionAnt() {
 
     }
 
-    private Plan getBestPlan(List<Plan> plans) {
-        return plans.get(0);
-    }
 
-    public void notify(boolean otherPheromone) {
-        System.out.println("OTHER PHEROMONE: " + otherPheromone);
-    }
 
     @Override
     public void setSimulator(SimulatorAPI api) {

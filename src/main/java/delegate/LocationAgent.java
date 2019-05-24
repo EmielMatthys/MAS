@@ -32,4 +32,8 @@ public class LocationAgent implements AntAcceptor, RoadUser {
         model.addObjectAt(this, source.getDeliveryLocation());
         rm = model;
     }
+
+    public Point getPosition(){
+        return source.getDeliveryLocation();
+    }
 }

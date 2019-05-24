@@ -96,7 +96,7 @@ public class DelegateExample {
 //        sim.register(p2);
 //        sim.register(p3);
 
-        sim.register(new Truck(rng, rm.getRandomPosition(rng), p1));
+        sim.register(new Truck(rng, rm.getRandomPosition(rng)));
 
         for(int i = 0; i < MAX_PACKAGES; i++){
             sim.register(new Package(Parcel.builder(rm.getRandomPosition(rng),

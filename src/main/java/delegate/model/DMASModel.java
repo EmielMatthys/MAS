@@ -73,7 +73,10 @@ public class DMASModel extends AbstractModel<DMASUser> implements TickListener, 
 
     @Override
     public void tick(TimeLapse timeLapse) {
-        for(Ant ant : ants){
+
+        List<Ant> ants_c = new ArrayList<>(ants);
+
+        for(Ant ant : ants_c){
             for (AntAcceptor acceptor: pheromoneMap.keySet()
                  ) {
                 if(withinSmellingDistance(ant, acceptor)){
