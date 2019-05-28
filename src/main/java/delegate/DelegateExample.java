@@ -19,6 +19,7 @@ import delegate.agent.Truck;
 import delegate.ant.ExplorationAnt;
 import delegate.ant.FeasibilityAnt;
 import delegate.ant.IntentionAnt;
+import delegate.ant.pheromone.FeasibilityPheromone;
 import delegate.model.DMASModel;
 import org.apache.commons.math3.random.RandomGenerator;
 import org.eclipse.swt.graphics.RGB;
@@ -54,6 +55,9 @@ public class DelegateExample {
                                 FeasibilityAnt.class, new RGB(0, 0, 255))
                         .withColorAssociation(
                                 IntentionAnt.class, new RGB(255, 0, 0))
+                        .withColorAssociation(
+                                LocationAgent.class, new RGB( 125, 125, 0))
+
                 )
                 ;
 
@@ -96,7 +100,7 @@ public class DelegateExample {
 //        sim.register(p2);
 //        sim.register(p3);
 
-        sim.register(new Truck(rng, rm.getRandomPosition(rng)));
+        sim.register(new Truck(rng, rm.getRandomPosition(rng), p1));
 
         for(int i = 0; i < MAX_PACKAGES; i++){
             sim.register(new Package(Parcel.builder(rm.getRandomPosition(rng),
@@ -104,9 +108,10 @@ public class DelegateExample {
                     .buildDTO()));
             sim.getRandomGenerator().nextDouble();
             sim.getRandomGenerator().nextDouble();
-            sim.getRandomGenerator().nextDouble();
-            sim.getRandomGenerator().nextDouble();
+            //sim.getRandomGenerator().nextDouble();
+            //sim.getRandomGenerator().nextDouble();
         }
+
 
         sim.start();
 

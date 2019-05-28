@@ -27,7 +27,7 @@ public class Package extends Parcel implements TickListener, RoadUser, Simulator
     private SimulatorAPI sim;
 
     private static final int FEAS_ANT_INTERVAL = 50;
-    private static final int FEAS_ANT_COUNT = 4;
+    private static final int FEAS_ANT_COUNT = 2;
     private int ant_tick = 0;
 
     private final LocationAgent locationAgent;
@@ -40,7 +40,9 @@ public class Package extends Parcel implements TickListener, RoadUser, Simulator
 
     @Override
     public void tick(TimeLapse timeLapse) {
-        if(getPDPModel().getParcelState(this).isPickedUp() || getPDPModel().getParcelState(this).isDelivered()){
+
+
+        if(getPDPModel().getParcelState(this).isDelivered()){ //TODO getPDPModel().getParcelState(this).isPickedUp() ||
             sim.unregister(locationAgent);
             sim.unregister(this);
             return;

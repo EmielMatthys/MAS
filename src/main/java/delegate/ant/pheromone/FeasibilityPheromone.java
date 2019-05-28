@@ -19,4 +19,10 @@ public class FeasibilityPheromone extends Pheromone {
     public Package getSourcePackage() {
         return sourcePackage;
     }
+
+    public boolean equals(FeasibilityPheromone ph) {
+        if (sourcePackage.equals(ph.getSourcePackage()))
+            return true;
+        return false;
+    }
 }

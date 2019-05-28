@@ -15,6 +15,8 @@ import delegate.AntAcceptor;
 import delegate.LocationAgent;
 import delegate.PheromoneStore;
 import delegate.ant.Ant;
+import delegate.ant.ExplorationAnt;
+import delegate.ant.FeasibilityAnt;
 import delegate.ant.pheromone.FeasibilityPheromone;
 import delegate.ant.pheromone.Pheromone;
 import org.slf4j.Logger;

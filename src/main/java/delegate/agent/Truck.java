@@ -39,10 +39,12 @@ public class Truck extends Vehicle implements TickListener, MovingRoadUser, Simu
 
     public static final double VEHICLE_SPEED = 0.2d;
     private static final int VEHICLE_CAPACITY = 1;
-    private static final int HOPS = 1;
-    private static final int EXPLORATION_FREQUENCY = 60;
+    private static final int HOPS = 2;
+    private static final int EXPLORATION_FREQUENCY = 150;
     private int exp_tick = 0;
     private int int_tick = 0;
+
+    boolean first = true;
 
     private RandomGenerator rng;
     private SimulatorAPI sim;
@@ -56,6 +58,9 @@ public class Truck extends Vehicle implements TickListener, MovingRoadUser, Simu
 
     private Optional<Path> path;
 
+    private boolean exploration;
+
+
 
     public Truck(RandomGenerator rng, Point startPos) {
         super(VehicleDTO.builder()
@@ -66,14 +71,14 @@ public class Truck extends Vehicle implements TickListener, MovingRoadUser, Simu
 
         this.destination = Optional.absent();
         this.currentPackage = Optional.absent();
-
+        this.exploration = true;
         this.plans = new ArrayList<>();
     }
 
 
     public Truck(RandomGenerator rng, Point startPos, Package p){
         this(rng, startPos);
-
+        this.exploration = true;
         this.currentPackage = Optional.of(p);
         path = Optional.absent();
     }
@@ -82,10 +87,27 @@ public class Truck extends Vehicle implements TickListener, MovingRoadUser, Simu
     protected void tickImpl(TimeLapse time) {
         RoadModel rm = getRoadModel();
         PDPModel pm = getPDPModel();
+        //TODO Path starts @DeliveryLocation but seems to work for now
 
-        spawnExplorationAnt();
 
         //TODO Truck should always follow a path
+        if (!plans.isEmpty()) {
+            //try next point in path
+            try {
+                //LOGGER.warn(plans.get(0).toString());
+                rm.followPath(this, plans.get(0).getPath(), time);
+
+            } catch (IllegalArgumentException e) {
+                plans.get(0).getPath().poll();
+            }
+            if (plans.get(0).getPath().isEmpty()) {
+                plans.remove(0);
+                if (!plans.isEmpty() && !plans.get(0).getPackages().isEmpty())
+                    currentPackage = Optional.of(plans.get(0).getPackages().get(0));
+                LOGGER.warn("PATH EMPTY");
+            }
+        }
+        else spawnExplorationAnt();
 
         if(currentPackage.isPresent()){
             final boolean inCargo = pm.containerContains(this, currentPackage.get());
@@ -95,16 +117,20 @@ public class Truck extends Vehicle implements TickListener, MovingRoadUser, Simu
                 currentPackage = Optional.absent();
             }
             else if (inCargo) {
-                rm.moveTo(this, currentPackage.get().getDeliveryLocation(), time);
+                //rm.moveTo(this, currentPackage.get().getDeliveryLocation(), time);
                 if (rm.getPosition(this).equals(currentPackage.get().getDeliveryLocation())) {
                     // deliver when we arrive
                     pm.deliver(this, currentPackage.get(), time);
+                    LOGGER.warn("PACKAGE DELIVERED");
+                    exploration = true;
                 }
             } else {
                 // it is still available, go there as fast as possible
-                rm.moveTo(this, currentPackage.get(), time);
+                //rm.moveTo(this, currentPackage.get(), time);
                 if (rm.equalPosition(this, currentPackage.get())) {
                     // pickup customer
+                    LOGGER.warn("PICKED UP PACKAGE");
+                    exploration = true;
                     pm.pickup(this, currentPackage.get(), time);
                 }
             }
@@ -112,24 +138,32 @@ public class Truck extends Vehicle implements TickListener, MovingRoadUser, Simu
     }
 
     private void spawnExplorationAnt() {
+
         if(++exp_tick < EXPLORATION_FREQUENCY)
             return;
-
+        if (!exploration)
+            return;
+        first = false;
         exp_tick = 0;
 
         Point spawnLocation = TravelDistanceHelper.getNearestNode(this, getRoadModel());
 
         if(currentPackage.isPresent() && getPDPModel().containerContains(this, currentPackage.get())){
-
+            LOGGER.warn("SENDING ANT TO PACKAGE FOR FURTHER EXPLORATION");
+            exploration = false;
             ExplorationAnt ant = new ExplorationAnt(spawnLocation, currentPackage.get(), this, HOPS, currentPackage.get().getDeliveryLocation());
             sim.register(ant);
         }
         else if(currentPackage.isPresent()){
+            LOGGER.warn("GOING TO PACKAGE");
             ExplorationAnt ant = new ExplorationAnt(spawnLocation, currentPackage.get(), this, HOPS);
             sim.register(ant);
+            exploration = false;
         }
         else{
             // No current package --> random exploration
+            LOGGER.warn("RANDOM DESTINATION");
+            this.exploration = true;
             ExplorationAnt ant = new ExplorationAnt(spawnLocation,this, 1, getRoadModel().getRandomPosition(rng));
             sim.register(ant);
         }
@@ -147,10 +181,15 @@ public class Truck extends Vehicle implements TickListener, MovingRoadUser, Simu
     }
 
     public void explorationCallback(Plan plan) {
+        //TODO Naar andere calls ook luisteren
 
         plan.getPath().poll();
-        LOGGER.warn("received pheromone callback: first point=" + plan.getPath().peek() + " truck pos="+getRoadModel().getPosition(this));
+        LOGGER.warn("received pheromone callback: first point=" + plan.getPath().peek() + " truck pos=" + getRoadModel().getPosition(this));
         this.plans.add(plan);
+        if (!plan.getPackages().isEmpty() && !currentPackage.isPresent()) {
+            currentPackage = Optional.of(plan.getPackages().get(0));
+
+        }
     }
 }
 

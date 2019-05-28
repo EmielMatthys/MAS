@@ -23,6 +23,8 @@ public class ExplorationAnt extends Ant implements SimulatorUser {
 
     protected static final Logger LOGGER = LoggerFactory.getLogger(ExplorationAnt.class);
 
+    private static final double DETECTION_DISTANCE = 0.5;
+
     private int hops;
 
     private Truck truck;
@@ -37,8 +39,15 @@ public class ExplorationAnt extends Ant implements SimulatorUser {
 
     private static final int CLONE_MAX = 5;
 
-
     private double estimatedArrival;
+
+    private boolean state = false; //true -> Exploring path to new package; false -> Going to destination
+
+    private enum State {
+        EXPLORATION, PACKAGE, LOCATION
+    }
+
+    private State antState;
 
 
     /**
@@ -55,13 +64,15 @@ public class ExplorationAnt extends Ant implements SimulatorUser {
         this.truck = truck;
         this.hops = hops;
 
+        antState = State.LOCATION;
+
         this.destination = aPackage.getPickupLocation();
 
         this.plan = new Plan(truck);
     }
 
     /**
-     * Instantiate ExplorationAnt with forced destination. To be used when spawned by truck isntead of old exploration ant
+     * Instantiate ExplorationAnt with forced destination. To be used when spawned by truck instead of old exploration ant
      * @param startLocation spawn
      * @param aPackage source package
      * @param truck truck to report to
@@ -71,6 +82,7 @@ public class ExplorationAnt extends Ant implements SimulatorUser {
     public ExplorationAnt(Point startLocation, Package aPackage, Truck truck, int hops, Point destination) {
         this(startLocation, aPackage, truck, hops);
         this.destination = destination;
+        antState = State.PACKAGE;
     }
 
     public ExplorationAnt(Point startLocation, Truck truck, int hops, Point randomDest) {
@@ -82,19 +94,40 @@ public class ExplorationAnt extends Ant implements SimulatorUser {
 
         this.destination = randomDest;
 
+        antState = State.EXPLORATION;
+
         this.plan = new Plan(truck);
 
     }
 
     @Override
     public void tick(TimeLapse timeLapse) {
+        LOGGER.info(antState.toString());
+        // Add position to path
+        Point pos = roadModel.getPosition(this);
+        Point p = new Point(Math.round(pos.x), Math.round(pos.y));
+        if (!plan.containsPoint(p))
+            plan.addToPath(p);
         if(!roadModel.containsObjectAt(this, destination)){
+
             roadModel.moveTo(this, destination, timeLapse);
         }
+
+
         else{
-            getLIFETIME();
+            //getLIFETIME();
+
+        }
+        // Destination bereikt
+        if (destination.equals(roadModel.getPosition(this))) {
+            if (aPackage.isPresent()) {
+                callBackToTruck();
+            }
+            //destination = roadModel.getRandomPosition(sim.getRandomGenerator());
+            LIFETIME = 0;
         }
     }
+
 
     @Override
     public void setSimulator(SimulatorAPI api) {
@@ -103,28 +136,41 @@ public class ExplorationAnt extends Ant implements SimulatorUser {
 
     @Override
     public void visit(LocationAgent t) {
+
         if(this.deathMark || LIFETIME == 0)
+            return;
+        // too close to startlocation
+        if (Point.distance(startLocation, roadModel.getPosition(this)) <= DETECTION_DISTANCE)
             return;
 
         List<FeasibilityPheromone> feasibilityPheromones = getDmasModel().detectPheromone(t, FeasibilityPheromone.class);
         if(feasibilityPheromones.isEmpty()) {
-            hops = 0;
-            LIFETIME = 0;
+            LOGGER.warn("NO PHEROMONES");
             return;
         }
-
         if(hops-- <= 0){
             //TODO report path to truck
+
+
         }
-        else{
+        else{ // pheromones available
             int i = 0;
+            FeasibilityPheromone ph = null;
+            LOGGER.warn("PHEROMONES: " + feasibilityPheromones.size());
             for(FeasibilityPheromone p : feasibilityPheromones){
                 if(i++ > CLONE_MAX)
                     break;
-
-                ExplorationAnt ant = new ExplorationAnt(t.getPosition(), p.getSourcePackage(), truck, hops);
+                // Only send 1 ant to package
+                if (ph != null && ph.equals(p)) {
+                    break;
+                }
+                ExplorationAnt ant = new ExplorationAnt(t.getPosition(), p.getSourcePackage(), truck, 1); //TODO hops
                 sim.register(ant);
+                ph = p;
+
             }
+            callBackToTruck();
+            LOGGER.warn("DUPLICATED MYSELF");
         }
 
         LIFETIME = 0;
@@ -153,6 +199,14 @@ public class ExplorationAnt extends Ant implements SimulatorUser {
 
         destination = aPackage.get().getDeliveryLocation();
 
+    }
+
+    private void callBackToTruck() {
+        plan.addToPath(destination);
+        if (aPackage.isPresent())
+            plan.addPackage(aPackage.get());
+        truck.explorationCallback(plan);
+        LOGGER.warn("CALLING BACK TRUCK");
     }
 
 }
