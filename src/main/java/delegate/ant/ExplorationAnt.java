@@ -37,7 +37,7 @@ public class ExplorationAnt extends Ant implements SimulatorUser {
 
     private Plan plan;
 
-    private static final int CLONE_MAX = 5;
+    private static final int CLONE_MAX = 100;
 
     private double estimatedArrival;
 
@@ -136,13 +136,15 @@ public class ExplorationAnt extends Ant implements SimulatorUser {
 
     @Override
     public void visit(LocationAgent t) {
-
         if(this.deathMark || LIFETIME == 0)
             return;
         // too close to startlocation
         if (Point.distance(startLocation, roadModel.getPosition(this)) <= DETECTION_DISTANCE)
             return;
 
+
+        if (aPackage.isPresent() && Point.distance(roadModel.getPosition(this), destination) > DETECTION_DISTANCE)
+            return;
         List<FeasibilityPheromone> feasibilityPheromones = getDmasModel().detectPheromone(t, FeasibilityPheromone.class);
         if(feasibilityPheromones.isEmpty()) {
             LOGGER.warn("NO PHEROMONES");
@@ -153,20 +155,23 @@ public class ExplorationAnt extends Ant implements SimulatorUser {
 
 
         }
-        else{ // pheromones available
+        else { // pheromones available
             int i = 0;
             FeasibilityPheromone ph = null;
             LOGGER.warn("PHEROMONES: " + feasibilityPheromones.size());
             for(FeasibilityPheromone p : feasibilityPheromones){
                 if(i++ > CLONE_MAX)
                     break;
-                // Only send 1 ant to package
-                if (ph != null && ph.equals(p)) {
+                // Only send 1 ant to each package //TODO CHANGE SO MORE ANTS CAN BE SPAWNED (HEURISTIC NEEDED)
+                if (ph != null && !ph.equals(p)) {
                     break;
                 }
-                ExplorationAnt ant = new ExplorationAnt(t.getPosition(), p.getSourcePackage(), truck, 1); //TODO hops
-                sim.register(ant);
-                ph = p;
+                if (aPackage.isPresent() && !p.getSourcePackage().getPickupLocation().equals(aPackage.get().getPickupLocation())) {
+                    ExplorationAnt ant = new ExplorationAnt(t.getPosition(), p.getSourcePackage(), truck, 1); //TODO hops
+                    sim.register(ant);
+                    ph = p;
+                }
+
 
             }
             callBackToTruck();
@@ -202,9 +207,13 @@ public class ExplorationAnt extends Ant implements SimulatorUser {
     }
 
     private void callBackToTruck() {
-        plan.addToPath(destination);
-        if (aPackage.isPresent())
+
+        if (aPackage.isPresent()) {
+            plan.addToPath(destination);
             plan.addPackage(aPackage.get());
+            System.out.println("PACKAGE PRESENT");
+        }
+        else plan.removePath();
         truck.explorationCallback(plan);
         LOGGER.warn("CALLING BACK TRUCK");
     }

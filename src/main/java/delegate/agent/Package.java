@@ -55,6 +55,8 @@ public class Package extends Parcel implements TickListener, RoadUser, Simulator
                 FeasibilityAnt ant = new FeasibilityAnt(this, rm.getRandomPosition(sim.getRandomGenerator()));
                 sim.register(ant);
             }
+            FeasibilityAnt ant = new FeasibilityAnt(this, getDeliveryLocation());
+            sim.register(ant);
 
             ant_tick = 0;
         }

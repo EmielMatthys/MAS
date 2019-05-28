@@ -131,6 +131,7 @@ public class Truck extends Vehicle implements TickListener, MovingRoadUser, Simu
                     // pickup customer
                     LOGGER.warn("PICKED UP PACKAGE");
                     exploration = true;
+                    plans.clear();
                     pm.pickup(this, currentPackage.get(), time);
                 }
             }
@@ -149,7 +150,7 @@ public class Truck extends Vehicle implements TickListener, MovingRoadUser, Simu
         Point spawnLocation = TravelDistanceHelper.getNearestNode(this, getRoadModel());
 
         if(currentPackage.isPresent() && getPDPModel().containerContains(this, currentPackage.get())){
-            LOGGER.warn("SENDING ANT TO PACKAGE FOR FURTHER EXPLORATION");
+            LOGGER.warn("SENDING ANT TO PACKAGE DESTINATION FOR FURTHER EXPLORATION");
             exploration = false;
             ExplorationAnt ant = new ExplorationAnt(spawnLocation, currentPackage.get(), this, HOPS, currentPackage.get().getDeliveryLocation());
             sim.register(ant);
@@ -162,7 +163,7 @@ public class Truck extends Vehicle implements TickListener, MovingRoadUser, Simu
         }
         else{
             // No current package --> random exploration
-            LOGGER.warn("RANDOM DESTINATION");
+            //LOGGER.warn("RANDOM DESTINATION");
             this.exploration = true;
             ExplorationAnt ant = new ExplorationAnt(spawnLocation,this, 1, getRoadModel().getRandomPosition(rng));
             sim.register(ant);
@@ -182,10 +183,11 @@ public class Truck extends Vehicle implements TickListener, MovingRoadUser, Simu
 
     public void explorationCallback(Plan plan) {
         //TODO Naar andere calls ook luisteren
-
-        plan.getPath().poll();
         LOGGER.warn("received pheromone callback: first point=" + plan.getPath().peek() + " truck pos=" + getRoadModel().getPosition(this));
-        this.plans.add(plan);
+        if (!plan.getPath().isEmpty()) {
+            plan.getPath().poll();
+            this.plans.add(plan);
+        }
         if (!plan.getPackages().isEmpty() && !currentPackage.isPresent()) {
             currentPackage = Optional.of(plan.getPackages().get(0));
 

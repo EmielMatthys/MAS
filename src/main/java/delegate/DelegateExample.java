@@ -31,7 +31,7 @@ import java.util.Set;
 
 public class DelegateExample {
 
-    private static final int MAX_PACKAGES = 3;
+    private static final int MAX_PACKAGES = 5;
 
     public static void main(String[] args) {
         run();
@@ -51,8 +51,8 @@ public class DelegateExample {
                                 Truck.class, "/graphics/flat/flatbed-truck-32.png")
                         .withColorAssociation(
                                 ExplorationAnt.class, new RGB(0, 255, 0))
-                        .withColorAssociation(
-                                FeasibilityAnt.class, new RGB(0, 0, 255))
+                        //.withColorAssociation(
+                        //        FeasibilityAnt.class, new RGB(0, 0, 255))
                         .withColorAssociation(
                                 IntentionAnt.class, new RGB(255, 0, 0))
                         .withColorAssociation(

@@ -77,4 +77,8 @@ public class Plan implements Comparable<Plan> {
     public void addPackage(Package p) {
         packages.add(p);
     }
+
+    public void removePath() {
+        path.removeAll(path);
+    }
 }
