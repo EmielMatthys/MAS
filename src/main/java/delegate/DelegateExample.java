@@ -54,6 +54,8 @@ public class DelegateExample {
                                 FeasibilityAnt.class, new RGB(0, 0, 255))
                         .withColorAssociation(
                                 IntentionAnt.class, new RGB(255, 0, 0))
+                        .withColorAssociation(
+                                LocationAgent.class, new RGB( 125, 125, 0))
                 )
                 ;
 
@@ -72,7 +74,7 @@ public class DelegateExample {
         RandomGenerator rng = sim.getRandomGenerator();
 
         //sim.getRandomGenerator().nextDouble();
-        sim.getRandomGenerator().nextDouble();
+        //sim.getRandomGenerator().nextDouble();
         sim.getRandomGenerator().nextDouble();
 
         Point rand = rm.getRandomPosition(sim.getRandomGenerator());

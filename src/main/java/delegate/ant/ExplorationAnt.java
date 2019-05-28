@@ -37,11 +37,11 @@ public class ExplorationAnt extends Ant implements SimulatorUser {
     private Queue<Package> packageQueue = new LinkedList<>();
 
     private Point destination;
-    private Optional<Point> startNode;
+    private Optional<Point> startNode = Optional.absent();
 
     private Plan plan;
 
-    private static final int CLONE_MAX = 5;
+    private static final int CLONE_MAX = 2;
 
     private List<Point> traveledNodes = new LinkedList<>();
 
@@ -49,29 +49,33 @@ public class ExplorationAnt extends Ant implements SimulatorUser {
 
     //Constructor voor empty truck edge case:
     public ExplorationAnt(Point spawnLocation, Point randomLocation, Truck truck, int hops){
-        super(spawnLocation);
+        super(spawnLocation, Integer.MAX_VALUE);
         this.destination = randomLocation;
         this.truck = truck;
         this.hops = hops;
+
+        plan = new Plan(truck);
     }
 
     //Constructor for splitting ant normal case: destination = package source
-    private ExplorationAnt(Point spawnLocation, Truck truck, int hops, Queue<Package> toVisit){
+    private ExplorationAnt(Point spawnLocation, Truck truck, int hops, Queue<Package> toVisit, Plan oldPlan){
         this(spawnLocation, toVisit.peek().getPickupLocation(), truck, hops);
 
         this.packageQueue = toVisit;
+        this.plan = oldPlan.clone();
+
     }
 
     /**
      *  To be used by Truck when it has package loaded
      * @param spawnLocation spawn location
-     * @param loadedPackage package this ant is associated with
      * @param truck truck
      * @param hops hops
      * @param startNode Node from which to start recording the path
      */
-    public ExplorationAnt(Point spawnLocation, Package loadedPackage, Truck truck, int hops, Point startNode){
-        this(spawnLocation, loadedPackage, truck, hops, new LinkedList<>());
+    public ExplorationAnt(Point spawnLocation, Truck truck, int hops, Point startNode, Queue<Package> packages){
+        this(spawnLocation, startNode, truck, hops);
+        packageQueue = new LinkedList<>(packages);
         destination = startNode;
         this.startNode = Optional.of(startNode);
     }
@@ -79,7 +83,7 @@ public class ExplorationAnt extends Ant implements SimulatorUser {
     @Override
     public void tick(TimeLapse timeLapse) {
 
-        if(startNode.isPresent()){
+        if(startNode.isPresent()){ // Go to startnode, ignore destination
             if(roadModel.containsObjectAt(this, startNode.get())){
                 startNode = Optional.absent();
             }
@@ -93,7 +97,11 @@ public class ExplorationAnt extends Ant implements SimulatorUser {
                 MoveProgress result = roadModel.moveTo(this, destination, timeLapse);
                 traveledNodes.addAll(result.travelledNodes());
             }
+            else
+                markDead();
         }
+        plan.addPos(traveledNodes);
+        traveledNodes.clear();
     }
 
     @Override
@@ -106,8 +114,11 @@ public class ExplorationAnt extends Ant implements SimulatorUser {
         if(this.deathMark || LIFETIME == 0)
             return;
 
-        if(startNode.isPresent()) //While moving to startnode, dont pick up pheromones
+        if(startNode.isPresent() && !startNode.get().equals(t.getPosition())){
+            //While moving to startnode, dont pick up pheromones
+            Point pos = t.getPosition();
             return;
+        }
 
         List<FeasibilityPheromone> feasibilityPheromones = getDmasModel().detectPheromone(t, FeasibilityPheromone.class);
 
@@ -116,7 +127,10 @@ public class ExplorationAnt extends Ant implements SimulatorUser {
 
             // if hops == 0 --> stop here and report back to truck, also hops-- afterwards
             if(hops-- <= 0){
-                truck.explorationCallback(traveledNodes);
+                plan.addPos(traveledNodes);
+                plan.addPos(t.getPosition());
+                truck.explorationCallback(plan);
+                LIFETIME = 0;
                 return;
             }
 
@@ -129,49 +143,42 @@ public class ExplorationAnt extends Ant implements SimulatorUser {
                 return;
             }
 
-            // Found pheromones --> split and destroy this ant
-            Set<Package> packages = feasibilityPheromones.stream()
-                    .map(FeasibilityPheromone::getSourcePackage)
-                    .filter(p -> !packageQueue.contains(p))
-                    .collect(Collectors.toSet());
+            cloneFromPheromones(feasibilityPheromones, t.getPosition());
 
-            int i = 0;
-            for(Package p : packages){
-                if(i++ > CLONE_MAX)
-                    break;
-
-                ExplorationAnt ant = new ExplorationAnt(t.getPosition(), truck, hops, new LinkedList<>(packageQueue));
-                ant.addToQueue(p);
-                sim.register(ant);
-            }
             LIFETIME = 0;
             sim.unregister(this);
         }
         else{
             // Found unexpected pheromones --> add them to list and split but dont abort
-            if(feasibilityPheromones.isEmpty())
-                return;
-
-            Set<Package> packages = feasibilityPheromones.stream()
-                    .map(FeasibilityPheromone::getSourcePackage)
-                    .collect(Collectors.toSet());
-
-            int i = 0;
-            for(Package p : packages){
-                if(i++ > CLONE_MAX)
-                    break;
-
-                ExplorationAnt ant = new ExplorationAnt(t.getPosition(), truck, hops, new LinkedList<>(packageQueue));
-                ant.addToQueue(p);
-                sim.register(ant);
-            }
+            cloneFromPheromones(feasibilityPheromones, t.getPosition());
+            if(packageQueue.isEmpty())
+                LIFETIME = 0;
 
             // split ants will investigate new unexpected package after reaching current destination
             // this main ant will ignore it
         }
     }
 
+    private void cloneFromPheromones(List<FeasibilityPheromone> pheromones, Point spawnPos){
+        if(pheromones.isEmpty())
+            return;
 
+        Set<Package> packages = pheromones.stream()
+                .map(FeasibilityPheromone::getSourcePackage)
+                .filter(p -> !packageQueue.contains(p))
+                .collect(Collectors.toSet());
+
+        int i = 0;
+        for(Package p : packages){
+            if(i++ > CLONE_MAX)
+                break;
+
+            Queue<Package> newQueue = new LinkedList<>(packageQueue);
+            newQueue.offer(p);
+            ExplorationAnt ant = new ExplorationAnt(spawnPos, truck, hops, newQueue, plan);
+            sim.register(ant);
+        }
+    }
 
     @Override
     public void visit(Package t) {
@@ -188,7 +195,7 @@ public class ExplorationAnt extends Ant implements SimulatorUser {
             markDead();
             return;
         }
-
+        plan.addPack(t);
         destination = t.getDeliveryLocation();
     }
 

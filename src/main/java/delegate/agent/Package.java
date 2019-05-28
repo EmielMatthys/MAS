@@ -15,6 +15,7 @@ import delegate.LocationAgent;
 import delegate.ant.Ant;
 import delegate.ant.FeasibilityAnt;
 import delegate.model.DMASModel;
+import delegate.model.DMASUser;
 import org.apache.commons.math3.random.RandomGenerator;
 
 import java.util.ArrayList;
@@ -31,6 +32,7 @@ public class Package extends Parcel implements TickListener, RoadUser, Simulator
     private int ant_tick = 0;
 
     private final LocationAgent locationAgent;
+    DMASModel dmasModel;
 
 
     public Package(ParcelDTO parcelDto) {
@@ -40,7 +42,11 @@ public class Package extends Parcel implements TickListener, RoadUser, Simulator
 
     @Override
     public void tick(TimeLapse timeLapse) {
-        if(getPDPModel().getParcelState(this).isPickedUp() || getPDPModel().getParcelState(this).isDelivered()){
+        if(getPDPModel().getParcelState(this).isPickedUp()){
+            dmasModel.unregister(this);
+        }
+
+        if(getPDPModel().getParcelState(this).isDelivered()){
             sim.unregister(locationAgent);
             sim.unregister(this);
             return;
@@ -79,6 +85,8 @@ public class Package extends Parcel implements TickListener, RoadUser, Simulator
 
     @Override
     public boolean initialize(DMASModel dmasModel) {
+        dmasModel.addAntAcceptor(this);
+        this.dmasModel = dmasModel;
         return true;
     }
 

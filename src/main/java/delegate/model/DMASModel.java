@@ -29,7 +29,7 @@ import java.util.*;
 public class DMASModel extends AbstractModel<DMASUser> implements TickListener, SimulatorUser {
 
     protected static final Logger LOGGER = LoggerFactory.getLogger(DMASModel.class);
-    private static final double DETECTION_DISTANCE = 0.5;
+    private static final double DETECTION_DISTANCE = 0.2;
 
     RoadModel rm;
     //List<Pheromone> pheromones;
@@ -73,7 +73,6 @@ public class DMASModel extends AbstractModel<DMASUser> implements TickListener, 
 
     @Override
     public void tick(TimeLapse timeLapse) {
-
         List<Ant> ants_c = new ArrayList<>(ants);
 
         for(Ant ant : ants_c){
@@ -87,7 +86,9 @@ public class DMASModel extends AbstractModel<DMASUser> implements TickListener, 
     }
 
     private boolean withinSmellingDistance(Ant ant, AntAcceptor acceptor){
-        return  Point.distance(rm.getPosition(ant), rm.getPosition(acceptor)) <= DETECTION_DISTANCE;
+        if(rm.containsObject(acceptor))
+            return Point.distance(rm.getPosition(ant), rm.getPosition(acceptor)) <= DETECTION_DISTANCE;
+        return false;
     }
 
     @Override
@@ -127,8 +128,10 @@ public class DMASModel extends AbstractModel<DMASUser> implements TickListener, 
     }
 
     public void dropPheromone(AntAcceptor t, Pheromone pheromone) {
-        pheromoneMap.get(t).add(pheromone);
-        simulator.register(pheromone);
+        if(!pheromoneMap.get(t).contains(pheromone)) {
+            pheromoneMap.get(t).add(pheromone);
+            simulator.register(pheromone);
+        }
     }
 
 

@@ -19,4 +19,9 @@ public class FeasibilityPheromone extends Pheromone {
     public Package getSourcePackage() {
         return sourcePackage;
     }
+
+    @Override
+    public boolean equals(Object o) {
+        return super.equals(o);
+    }
 }

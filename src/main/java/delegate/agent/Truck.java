@@ -10,6 +10,7 @@ import com.github.rinde.rinsim.core.model.pdp.VehicleDTO;
 import com.github.rinde.rinsim.core.model.road.DynamicGraphRoadModelImpl;
 import com.github.rinde.rinsim.core.model.road.MovingRoadUser;
 import com.github.rinde.rinsim.core.model.road.RoadModel;
+import com.github.rinde.rinsim.core.model.road.RoadUser;
 import com.github.rinde.rinsim.core.model.time.TickListener;
 import com.github.rinde.rinsim.core.model.time.TimeLapse;
 import com.github.rinde.rinsim.geom.Point;
@@ -42,20 +43,15 @@ public class Truck extends Vehicle implements TickListener, MovingRoadUser, Simu
     public static final double VEHICLE_SPEED = 0.2d;
     private static final int VEHICLE_CAPACITY = 1;
     private static final int HOPS = 1;
-    private static final int EXPLORATION_FREQUENCY = 60;
+    private static final int EXPLORATION_FREQUENCY = 200;
     private int exp_tick = 0;
     private int int_tick = 0;
 
     private RandomGenerator rng;
     private SimulatorAPI sim;
-    private Queue<Point> path = new LinkedList<>();
-
-    private Optional<Package> currentPackage;
-
-    //Temp to give with Intention Ant
-    private Optional<Point> destination;
 
     private List<Plan> plans;
+    private Optional<Plan> currentPlan;
 
 
 
@@ -66,17 +62,8 @@ public class Truck extends Vehicle implements TickListener, MovingRoadUser, Simu
                 .startPosition(startPos).build());
         this.rng = rng;
 
-        this.destination = Optional.absent();
-        this.currentPackage = Optional.absent();
-
+        currentPlan = Optional.absent();
         this.plans = new ArrayList<>();
-    }
-
-
-    public Truck(RandomGenerator rng, Point startPos, Package p){
-        this(rng, startPos);
-
-        this.currentPackage = Optional.of(p);
     }
 
     @Override
@@ -84,32 +71,76 @@ public class Truck extends Vehicle implements TickListener, MovingRoadUser, Simu
         RoadModel rm = getRoadModel();
         PDPModel pm = getPDPModel();
 
-        spawnExplorationAnt();
 
-        //TODO Truck should always follow a path
+        if(!currentPlan.isPresent() || currentPlan.get().getPath().peekLast() == null){
+            selectBestPlan();
+        }
 
-        if(currentPackage.isPresent()){
-            final boolean inCargo = pm.containerContains(this, currentPackage.get());
-            // sanity check: if it is not in our cargo AND it is also not on the
-            // RoadModel, we cannot go to curr anymore.
-            if (!inCargo && !rm.containsObject(currentPackage.get())) {
-                currentPackage = Optional.absent();
+        if(currentPlan.isPresent() && time.hasTimeLeft()){
+            Package nextP = currentPlan.get().peekNextPackage();
+            Point currentPos = rm.getPosition(this);
+
+            if(pm.containerContains(this, nextP)){
+                // We are moving towards a destination
+
+                if(currentPos.equals(nextP.getDeliveryLocation())){
+                    pm.deliver(this, nextP, time);
+                    if(currentPlan.get().popNextPackage())
+                        currentPlan = Optional.absent();
+                }
+                else
+                    tryFollowPathOrCheat(currentPlan.get(), nextP.getDeliveryLocation(), time);
             }
-            else if (inCargo) {
-                //rm.moveTo(this, currentPackage.get().getDeliveryLocation(), time);
-                if (rm.getPosition(this).equals(currentPackage.get().getDeliveryLocation())) {
-                    // deliver when we arrive
-                    pm.deliver(this, currentPackage.get(), time);
+            else{
+                // We are moving towards source
+
+                if(currentPos.equals(nextP.getPickupLocation())){
+                    pm.pickup(this, nextP, time);
                 }
-            } else {
-                // it is still available, go there as fast as possible
-                rm.moveTo(this, currentPackage.get(), time);
-                if (rm.equalPosition(this, currentPackage.get())) {
-                    // pickup customer
-                    pm.pickup(this, currentPackage.get(), time);
-                }
+                else
+                    tryFollowPathOrCheat(currentPlan.get(), nextP.getPickupLocation(), time);
             }
         }
+
+        spawnExplorationAnt();
+    }
+
+    /**
+     * Uses roadmodel.moveTo if this object is close enough to nextP or tries to follow given plan otherwise
+     * @param currentPlan
+     * @param nextP
+     * @param timeLapse
+     */
+    private void tryFollowPathOrCheat(Plan currentPlan, Point nextP, TimeLapse timeLapse){
+        RoadModel rm = getRoadModel();
+        Point currentPos = rm.getPosition(this);
+
+        if(Point.distance(currentPos, nextP) <= 0.5){
+            // Very close to destination, cheat to get there
+            rm.moveTo(this, nextP, timeLapse);
+        }
+        else{
+            try{
+                rm.followPath(this, currentPlan.getPath(), timeLapse);
+            }catch (IllegalArgumentException e){
+                currentPlan.getPath().poll();
+            }
+        }
+    }
+
+    /**
+     * sets the best plan in list of plans if not empty (currently just the first)
+     */
+    private void selectBestPlan() {
+        if(plans.isEmpty()){
+            currentPlan = Optional.absent();
+            return;
+        }
+        LOGGER.warn("plans size: "+plans.size());
+        currentPlan = Optional.of(plans.stream()
+                .filter(plan -> getRoadModel().containsObject(plan.peekNextPackage()))
+                .findAny().get());
+        plans.clear();
     }
 
     private void spawnExplorationAnt() {
@@ -117,21 +148,18 @@ public class Truck extends Vehicle implements TickListener, MovingRoadUser, Simu
             return;
 
         exp_tick = 0;
-
         Point spawnLocation = TravelDistanceHelper.getNearestNode(this, getRoadModel());
 
-        if(currentPackage.isPresent() && getPDPModel().containerContains(this, currentPackage.get())){
-
-            ExplorationAnt ant = new ExplorationAnt(spawnLocation, currentPackage.get(), this, HOPS, currentPackage.get().getDeliveryLocation());
-            sim.register(ant);
-        }
-        else if(currentPackage.isPresent()){
-            ExplorationAnt ant = new ExplorationAnt(spawnLocation, currentPackage.get(), this, HOPS);
-            sim.register(ant);
-        }
-        else{
-            // No current package --> random exploration
-            ExplorationAnt ant = new ExplorationAnt(spawnLocation,this, 1, getRoadModel().getRandomPosition(rng));
+        if(currentPlan.isPresent()){
+            // Send ants with forwarded start
+            Point lastPoint = currentPlan.get().getPath().peekLast();
+            if(lastPoint == null)
+                return;
+            ExplorationAnt newAnt = new ExplorationAnt(spawnLocation, this, HOPS, lastPoint, currentPlan.get().getPackages());
+            sim.register(newAnt);
+        }else{
+            // No plan --> random ants
+            ExplorationAnt ant = new ExplorationAnt(spawnLocation, getRoadModel().getRandomPosition(rng), this, HOPS-1);
             sim.register(ant);
         }
     }
@@ -149,14 +177,9 @@ public class Truck extends Vehicle implements TickListener, MovingRoadUser, Simu
 
     public void explorationCallback(Plan plan) {
 
-        plan.getPath().poll();
+        //plan.getPath().poll();
         LOGGER.warn("received pheromone callback: first point=" + plan.getPath().peek() + " truck pos="+getRoadModel().getPosition(this));
         this.plans.add(plan);
     }
 
-    public void explorationCallback(Queue<Point> plan) {
-
-        LOGGER.warn("received pheromone callback: " + plan + " truck pos="+getRoadModel().getPosition(this));
-        this.path = plan;
-    }
 }
