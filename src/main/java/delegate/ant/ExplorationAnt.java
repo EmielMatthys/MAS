@@ -2,6 +2,7 @@ package delegate.ant;
 
 import com.github.rinde.rinsim.core.SimulatorAPI;
 import com.github.rinde.rinsim.core.SimulatorUser;
+import com.github.rinde.rinsim.core.model.road.MoveProgress;
 import com.github.rinde.rinsim.core.model.time.TimeLapse;
 import com.github.rinde.rinsim.geom.Point;
 import com.google.common.base.Optional;
@@ -15,9 +16,12 @@ import delegate.ant.pheromone.Pheromone;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.LinkedList;
 import java.util.List;
 
+import java.util.Queue;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 public class ExplorationAnt extends Ant implements SimulatorUser {
 
@@ -30,69 +34,65 @@ public class ExplorationAnt extends Ant implements SimulatorUser {
     private SimulatorAPI sim;
 
     private Optional<Package> aPackage;
+    private Queue<Package> packageQueue = new LinkedList<>();
 
     private Point destination;
+    private Optional<Point> startNode;
 
     private Plan plan;
 
     private static final int CLONE_MAX = 5;
 
+    private List<Point> traveledNodes = new LinkedList<>();
 
     private double estimatedArrival;
 
-
-    /**
-     * Instantiate ExplorationAnt. Will start moving to package pickup location.
-     * @param startLocation spawn location
-     * @param aPackage package
-     * @param truck truck to report to
-     * @param hops hops
-     */
-    public ExplorationAnt(Point startLocation, Package aPackage, Truck truck, int hops) {
-        super(startLocation);
-        this.LIFETIME = Integer.MAX_VALUE;
-        this.aPackage = Optional.of(aPackage);
+    //Constructor voor empty truck edge case:
+    public ExplorationAnt(Point spawnLocation, Point randomLocation, Truck truck, int hops){
+        super(spawnLocation);
+        this.destination = randomLocation;
         this.truck = truck;
         this.hops = hops;
+    }
 
-        this.destination = aPackage.getPickupLocation();
+    //Constructor for splitting ant normal case: destination = package source
+    private ExplorationAnt(Point spawnLocation, Truck truck, int hops, Queue<Package> toVisit){
+        this(spawnLocation, toVisit.peek().getPickupLocation(), truck, hops);
 
-        this.plan = new Plan(truck);
+        this.packageQueue = toVisit;
     }
 
     /**
-     * Instantiate ExplorationAnt with forced destination. To be used when spawned by truck isntead of old exploration ant
-     * @param startLocation spawn
-     * @param aPackage source package
-     * @param truck truck to report to
+     *  To be used by Truck when it has package loaded
+     * @param spawnLocation spawn location
+     * @param loadedPackage package this ant is associated with
+     * @param truck truck
      * @param hops hops
-     * @param destination forced destination
+     * @param startNode Node from which to start recording the path
      */
-    public ExplorationAnt(Point startLocation, Package aPackage, Truck truck, int hops, Point destination) {
-        this(startLocation, aPackage, truck, hops);
-        this.destination = destination;
-    }
-
-    public ExplorationAnt(Point startLocation, Truck truck, int hops, Point randomDest) {
-        super(startLocation, 200);
-        this.LIFETIME = Integer.MAX_VALUE; //TODO HIER ZIT LIFETIME FOUT
-        this.aPackage = Optional.absent();
-        this.truck = truck;
-        this.hops = hops;
-
-        this.destination = randomDest;
-
-        this.plan = new Plan(truck);
-
+    public ExplorationAnt(Point spawnLocation, Package loadedPackage, Truck truck, int hops, Point startNode){
+        this(spawnLocation, loadedPackage, truck, hops, new LinkedList<>());
+        destination = startNode;
+        this.startNode = Optional.of(startNode);
     }
 
     @Override
     public void tick(TimeLapse timeLapse) {
-        if(!roadModel.containsObjectAt(this, destination)){
-            roadModel.moveTo(this, destination, timeLapse);
+
+        if(startNode.isPresent()){
+            if(roadModel.containsObjectAt(this, startNode.get())){
+                startNode = Optional.absent();
+            }
+            else{
+                MoveProgress result = roadModel.moveTo(this, startNode.get(), timeLapse);
+                traveledNodes.addAll(result.travelledNodes());
+            }
         }
-        else{
-            getLIFETIME();
+        else {
+            if (!roadModel.containsObjectAt(this, destination)) {
+                MoveProgress result = roadModel.moveTo(this, destination, timeLapse);
+                traveledNodes.addAll(result.travelledNodes());
+            }
         }
     }
 
@@ -106,29 +106,72 @@ public class ExplorationAnt extends Ant implements SimulatorUser {
         if(this.deathMark || LIFETIME == 0)
             return;
 
-        List<FeasibilityPheromone> feasibilityPheromones = getDmasModel().detectPheromone(t, FeasibilityPheromone.class);
-        if(feasibilityPheromones.isEmpty()) {
-            hops = 0;
-            LIFETIME = 0;
+        if(startNode.isPresent()) //While moving to startnode, dont pick up pheromones
             return;
-        }
 
-        if(hops-- <= 0){
-            //TODO report path to truck
-        }
-        else{
+        List<FeasibilityPheromone> feasibilityPheromones = getDmasModel().detectPheromone(t, FeasibilityPheromone.class);
+
+        if(t.getPosition().equals(destination)){
+            // We are expecting pheromones here
+
+            // if hops == 0 --> stop here and report back to truck, also hops-- afterwards
+            if(hops-- <= 0){
+                truck.explorationCallback(traveledNodes);
+                return;
+            }
+
+            // Remove current package from queue head, since we dealt with it
+            this.packageQueue.poll();
+
+            if(feasibilityPheromones.isEmpty()) {
+                hops = 0;
+                LIFETIME = 0;
+                return;
+            }
+
+            // Found pheromones --> split and destroy this ant
+            Set<Package> packages = feasibilityPheromones.stream()
+                    .map(FeasibilityPheromone::getSourcePackage)
+                    .filter(p -> !packageQueue.contains(p))
+                    .collect(Collectors.toSet());
+
             int i = 0;
-            for(FeasibilityPheromone p : feasibilityPheromones){
+            for(Package p : packages){
                 if(i++ > CLONE_MAX)
                     break;
 
-                ExplorationAnt ant = new ExplorationAnt(t.getPosition(), p.getSourcePackage(), truck, hops);
+                ExplorationAnt ant = new ExplorationAnt(t.getPosition(), truck, hops, new LinkedList<>(packageQueue));
+                ant.addToQueue(p);
                 sim.register(ant);
             }
+            LIFETIME = 0;
+            sim.unregister(this);
         }
+        else{
+            // Found unexpected pheromones --> add them to list and split but dont abort
+            if(feasibilityPheromones.isEmpty())
+                return;
 
-        LIFETIME = 0;
+            Set<Package> packages = feasibilityPheromones.stream()
+                    .map(FeasibilityPheromone::getSourcePackage)
+                    .collect(Collectors.toSet());
+
+            int i = 0;
+            for(Package p : packages){
+                if(i++ > CLONE_MAX)
+                    break;
+
+                ExplorationAnt ant = new ExplorationAnt(t.getPosition(), truck, hops, new LinkedList<>(packageQueue));
+                ant.addToQueue(p);
+                sim.register(ant);
+            }
+
+            // split ants will investigate new unexpected package after reaching current destination
+            // this main ant will ignore it
+        }
     }
+
+
 
     @Override
     public void visit(Package t) {
@@ -136,12 +179,7 @@ public class ExplorationAnt extends Ant implements SimulatorUser {
         // if found --> stop looking
         // else --> go to destination
 
-        if(!aPackage.isPresent()){
-            // Truck has no package yet, make this the new one
-            aPackage = aPackage.of(t);
-        }
-
-        if(!t.equals(aPackage.get()))
+        if(packageQueue.isEmpty() || !packageQueue.peek().equals(t)) // Ignore all but our next package
             return;
 
         List<IntentionPheromone> intentionPheromones = getDmasModel().detectPheromone(t, IntentionPheromone.class);
@@ -151,59 +189,10 @@ public class ExplorationAnt extends Ant implements SimulatorUser {
             return;
         }
 
-        destination = aPackage.get().getDeliveryLocation();
-
+        destination = t.getDeliveryLocation();
     }
 
+    private void addToQueue(Package p){
+        packageQueue.add(p);
+    }
 }
-
-
-
-/*
- Point currentLocation = getRoadModel().getPosition(this);
-
-
-        // Are we going to deliverylocation of package?
-        if(state == ExplorationState.TO_DELIVERY_LOCATION){
-
-            // Have we reached the deliverylocation of the package?
-            if(getRoadModel().containsObjectAt(this, aPackage.getDeliveryLocation())){
-
-                // Smell for pheromones
-                List<FeasibilityPheromone> feasPheromones = getDmasModel().detectPheromone(currentLocation, FeasibilityPheromone.class);
-
-                hops--;
-                if(hops <= 0){
-                    //TODO return path to truck
-                    truck.explorationCallback(plan);
-                    this.LIFETIME = 0;
-                }
-                else{
-                    for (FeasibilityPheromone ph : feasPheromones){
-                        ExplorationAnt newAnt = new ExplorationAnt(
-                                currentLocation, // our current location
-                                ph.getSourcePackage(),
-                                ExplorationState.TO_PACKAGE_SOURCE,
-                                truck,
-                                hops
-                        );
-                        sim.register(newAnt);
-                    }
-                    sim.unregister(this);
-                    return;
-                }
-            }
-            else if(timeLapse.hasTimeLeft()) {
-                getRoadModel().moveTo(this, aPackage.getDeliveryLocation(), timeLapse);
-                if(first)
-                    plan.addToPath(getRoadModel().getDestination(this));
-            }
-        }
-        else if(state == ExplorationState.TO_PACKAGE_SOURCE){
-            if(getRoadModel().containsObjectAt(this, aPackage.getPickupLocation())){
-                this.setState(ExplorationState.TO_DELIVERY_LOCATION);
-            }
-            else if(timeLapse.hasTimeLeft())
-                getRoadModel().moveTo(this, aPackage.getPickupLocation(), timeLapse);
-        }
- */

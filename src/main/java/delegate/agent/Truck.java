@@ -31,7 +31,9 @@ import org.slf4j.LoggerFactory;
 
 import javax.print.attribute.standard.Destination;
 import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.List;
+import java.util.Queue;
 
 public class Truck extends Vehicle implements TickListener, MovingRoadUser, SimulatorUser
 {
@@ -46,6 +48,7 @@ public class Truck extends Vehicle implements TickListener, MovingRoadUser, Simu
 
     private RandomGenerator rng;
     private SimulatorAPI sim;
+    private Queue<Point> path = new LinkedList<>();
 
     private Optional<Package> currentPackage;
 
@@ -54,7 +57,6 @@ public class Truck extends Vehicle implements TickListener, MovingRoadUser, Simu
 
     private List<Plan> plans;
 
-    private Optional<Path> path;
 
 
     public Truck(RandomGenerator rng, Point startPos) {
@@ -75,7 +77,6 @@ public class Truck extends Vehicle implements TickListener, MovingRoadUser, Simu
         this(rng, startPos);
 
         this.currentPackage = Optional.of(p);
-        path = Optional.absent();
     }
 
     @Override
@@ -95,7 +96,7 @@ public class Truck extends Vehicle implements TickListener, MovingRoadUser, Simu
                 currentPackage = Optional.absent();
             }
             else if (inCargo) {
-                rm.moveTo(this, currentPackage.get().getDeliveryLocation(), time);
+                //rm.moveTo(this, currentPackage.get().getDeliveryLocation(), time);
                 if (rm.getPosition(this).equals(currentPackage.get().getDeliveryLocation())) {
                     // deliver when we arrive
                     pm.deliver(this, currentPackage.get(), time);
@@ -152,60 +153,10 @@ public class Truck extends Vehicle implements TickListener, MovingRoadUser, Simu
         LOGGER.warn("received pheromone callback: first point=" + plan.getPath().peek() + " truck pos="+getRoadModel().getPosition(this));
         this.plans.add(plan);
     }
+
+    public void explorationCallback(Queue<Point> plan) {
+
+        LOGGER.warn("received pheromone callback: " + plan + " truck pos="+getRoadModel().getPosition(this));
+        this.path = plan;
+    }
 }
-
-/*
- // TODO: helemaal begin: geen assigned package
-        // TODO: Paths maken
-
-        PDPModel pm = getPDPModel();
-        DynamicGraphRoadModelImpl rm = (DynamicGraphRoadModelImpl) getRoadModel();
-
-        if(!plans.isEmpty()){
-            Plan plan = getBestPlan(plans);
-            rm.followPath(this, plan.getPath(), time);
-            return;
-        }
-
-        if(currentPackage.isPresent()){
-            final boolean inCargo = pm.containerContains(this, currentPackage.get());
-            // sanity check: if it is not in our cargo AND it is also not on the
-            // RoadModel, we cannot go to curr anymore.
-            if (!inCargo && !rm.containsObject(currentPackage.get())) {
-                currentPackage = Optional.absent();
-            }
-            else if(inCargo){
-                if (rm.getPosition(this).equals(currentPackage.get().getDeliveryLocation())) {
-                    // deliver when we arrive
-                    pm.deliver(this, currentPackage.get(), time);
-                    // TODO hier moet nieuw pad worden geactiveerd?
-                    // TODO: Choose best path of all received callbacks, follow it and send intention ants.
-                }
-                else{
-                    destination = Optional.absent();
-                    tick++;
-                    if(tick >= EXPLORATION_FREQUENCY){
-                        spawnExplorationAnt();
-                        tick = 0;
-                    }
-                }
-            }
-            else{
-                // On rm but not cargo
-                if (rm.equalPosition(this, currentPackage.get())) {
-                    // pickup customer
-                    pm.pickup(this, currentPackage.get(), time);
-                }
-                destination = Optional.of(currentPackage.get().getPickupLocation());
-            }
-        }
-
-        //spawnIntentionAnt();
-
-        if (!time.hasTimeLeft()) {
-            return;
-        }
-        //TODO: MOET BEWEGEN VOLGENS PATH VAN EXPLORATIONANT
-        if(destination.isPresent())
-            getRoadModel().moveTo(this, destination.get(), time);
- */

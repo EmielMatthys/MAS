@@ -18,13 +18,7 @@ public class PheromoneStore extends LinkedList<Pheromone> {
     public void update(){
         // Remove disappeared Pheromones
 
-        Iterator<Pheromone> iterator =  this.iterator();
-        while(iterator.hasNext()){
-            Pheromone ph = iterator.next();
-            if(ph.disappeared()){
-                iterator.remove();
-            }
-        }
+        this.removeIf(Pheromone::disappeared);
 
         this.addAll(incomingList);
         incomingList.clear();
