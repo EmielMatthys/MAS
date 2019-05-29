@@ -135,7 +135,7 @@ public class ExplorationAnt extends Ant implements SimulatorUser {
             }
 
             // Remove current package from queue head, since we dealt with it
-            this.packageQueue.poll();
+            //this.packageQueue.poll();
 
             if(feasibilityPheromones.isEmpty()) {
                 hops = 0;
@@ -149,6 +149,8 @@ public class ExplorationAnt extends Ant implements SimulatorUser {
             sim.unregister(this);
         }
         else{
+            return;
+            /*
             // Found unexpected pheromones --> add them to list and split but dont abort
             cloneFromPheromones(feasibilityPheromones, t.getPosition());
             if(packageQueue.isEmpty())
@@ -156,6 +158,7 @@ public class ExplorationAnt extends Ant implements SimulatorUser {
 
             // split ants will investigate new unexpected package after reaching current destination
             // this main ant will ignore it
+            */
         }
     }
 
@@ -166,6 +169,7 @@ public class ExplorationAnt extends Ant implements SimulatorUser {
         Set<Package> packages = pheromones.stream()
                 .map(FeasibilityPheromone::getSourcePackage)
                 .filter(p -> !packageQueue.contains(p))
+                .filter(p -> roadModel.containsObject(p))
                 .collect(Collectors.toSet());
 
         int i = 0;

@@ -7,6 +7,7 @@ import delegate.agent.Package;
 
 import java.util.Collection;
 import java.util.LinkedList;
+import java.util.Optional;
 import java.util.Queue;
 
 
@@ -83,5 +84,13 @@ public class Plan implements Comparable<Plan>, Cloneable {
 
     public Queue<Package> getPackages() {
         return this.packages;
+    }
+
+    public static Optional<Plan> selectBest(Collection<Plan> plans){
+        Optional<Plan> res = plans.stream()
+                .sorted((plan1, plan2) -> Integer.compare(plan1.getPath().size(), plan2.getPath().size()))
+                .findFirst();
+
+        return res;
     }
 }
