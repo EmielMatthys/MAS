@@ -30,7 +30,7 @@ import java.util.Set;
 
 public class DelegateExample {
 
-    private static final int MAX_PACKAGES = 6;
+    private static final int MAX_PACKAGES = 8;
 
     public static void main(String[] args) {
         run();

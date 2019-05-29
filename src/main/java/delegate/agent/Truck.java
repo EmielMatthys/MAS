@@ -32,6 +32,7 @@ public class Truck extends Vehicle implements TickListener, MovingRoadUser, Simu
     private static final int VEHICLE_CAPACITY = 1;
     private static final int HOPS = 2;
     private static final int EXPLORATION_FREQUENCY = 200;
+    private static final int INTENTION_FREQUENCY = 200;
     private int exp_tick = 0;
     private int int_tick = 0;
 
@@ -90,6 +91,7 @@ public class Truck extends Vehicle implements TickListener, MovingRoadUser, Simu
                 currentPlan = Optional.empty();
                 return;
             }
+            spawnIntentionAnts();
 
             Point currentPos = rm.getPosition(this);
 
@@ -104,7 +106,7 @@ public class Truck extends Vehicle implements TickListener, MovingRoadUser, Simu
             else{
                 if(currentPos.equals(nextPack.getPickupLocation())){
                     pm.pickup(this, nextPack, time);
-                    if(currentPlan.get().getNextPackage().equals(currentPlan.get().getTailPackage()))
+                    //if(currentPlan.get().getNextPackage().equals(currentPlan.get().getTailPackage()))
                         spawnForwardExplorationAnt();
                 }
                 else
@@ -207,11 +209,19 @@ public class Truck extends Vehicle implements TickListener, MovingRoadUser, Simu
      * Sends Intention ants to all packages in current plan
      */
     private void spawnIntentionAnts() {
+        if(++exp_tick < INTENTION_FREQUENCY)
+            return;
+        exp_tick = 0;
+
+        LOGGER.warn("Spawning intention ants + " + currentPlan.isPresent());
         if(currentPlan.isPresent()){
             Point spawnLocation = TravelDistanceHelper.getNearestNode(this, getRoadModel());
-            for(Package p : currentPlan.get().getPackages()){
-                IntentionAnt ant = new IntentionAnt(spawnLocation, this, p.getPickupLocation());
-            }
+            currentPlan.get().getPackages().stream()
+                    .filter(aPackage -> getRoadModel().containsObject(aPackage))
+                    .forEach(p -> {
+                                IntentionAnt ant = new IntentionAnt(spawnLocation, this, p.getPickupLocation());
+                                sim.register(ant);
+                            });
         }
     }
 
