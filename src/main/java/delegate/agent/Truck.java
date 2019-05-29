@@ -39,7 +39,7 @@ public class Truck extends Vehicle implements TickListener, MovingRoadUser, Simu
 
     public static final double VEHICLE_SPEED = 0.2d;
     private static final int VEHICLE_CAPACITY = 1;
-    private static final int HOPS = 2;
+    private static final int HOPS = 1;
     private static final int EXPLORATION_FREQUENCY = 100;
     private static final int LISTENING_TICKS = 400;
     private int exp_tick = 0;
@@ -111,8 +111,10 @@ public class Truck extends Vehicle implements TickListener, MovingRoadUser, Simu
             }
             if (plans.get(0).getPath().isEmpty()) {
                 plans.remove(0);
-                if (!plans.isEmpty() && !plans.get(0).getPackages().isEmpty())
+                if (!plans.isEmpty() && !plans.get(0).getPackages().isEmpty()) {
                     currentPackage = Optional.of(plans.get(0).getPackages().get(0));
+                    LOGGER.warn("ASSIGNED NEW PACKAGE");
+                }
                 //LOGGER.warn("PATH EMPTY");
             }
         }
@@ -125,14 +127,15 @@ public class Truck extends Vehicle implements TickListener, MovingRoadUser, Simu
             if (!inCargo && !rm.containsObject(currentPackage.get())) {
                 currentPackage = Optional.absent();
             }
-            else if (inCargo) {
+            if (inCargo) {
                 //rm.moveTo(this, currentPackage.get().getDeliveryLocation(), time);
                 if (rm.getPosition(this).equals(currentPackage.get().getDeliveryLocation())) {
                     // deliver when we arrive
                     pm.deliver(this, currentPackage.get(), time);
                     LOGGER.warn("PACKAGE DELIVERED");
                     LOGGER.warn("----------------------");
-                    currentPackage = Optional.of(plans.get(0).getPackages().get(0));
+                    //currentPackage = Optional.of(plans.get(0).getPackages().get(0));
+                    //currentPackage = Optional.absent();
                     exploration = true;
                 }
             } else {
@@ -194,34 +197,39 @@ public class Truck extends Vehicle implements TickListener, MovingRoadUser, Simu
     }
 
     /**
-     * Collects all the plan of exploration ants and sets a timer when first exploration ant calls back.
+     * Receives the initial path to a destination (?) and sets a timer for listening
+     * @param plan
+     */
+    public void initialPathCallback(Plan plan) {
+        plans.add(plan);
+       // currentPackage = Optional.of(plan.getPackages().get(0));
+        listening = true;
+        LOGGER.warn("NOW LISTENING");
+    }
+
+    /**
+     * Collects all the plan of exploration ants.
      * @param plan
      */
     public void explorationCallback(Plan plan) {
-        //TODO receive all calls but process later
-        LOGGER.warn("received pheromone callback: first point=" + plan.getPath().peek()
-                    + " truck pos=" + getRoadModel().getPosition(this));
-        //ExplorationAnt with path
-        if (plan.getDuplicator() && !plan.getPackages().isEmpty()){
-            plans.add(plan);
-            currentPackage = Optional.of(plan.getPackages().get(0));
-            listening = true;
-            LOGGER.warn("NOW LISTENING");
-        }
-        else if (plan.getPackages().isEmpty() && !currentPackage.isPresent()) {
+        if (plan.getPackages().isEmpty() && !currentPackage.isPresent()) {
             LOGGER.warn("PACKAGES IS EMPTY");
         }
         else if (!plan.getPath().isEmpty()) {
             //plan.getPath().poll();
-            if (listening)
+            if (listening) {
+                LOGGER.warn("received pheromone callback: first point=" + plan.getPath().peek()
+                        + " truck pos=" + getRoadModel().getPosition(this));
                 this.tempPlans.add(plan);
+            }
         }
         //if (!plan.getPackages().isEmpty() && !currentPackage.isPresent())
         //    currentPackage = Optional.of(plan.getPackages().get(0));
     }
 
-    private void handleListening() {
 
+    private void handleListening() {
+        // TODO Kan ook gedaan worden door in path aantal duplicates mee te geven en dan te wachten tot deze allemaal een callback doen
         if (listening_ticks++ < LISTENING_TICKS) {
             return;
         }
@@ -230,7 +238,7 @@ public class Truck extends Vehicle implements TickListener, MovingRoadUser, Simu
         listening = false;
         LOGGER.warn("STOPPED LISTENING AND CHOOSING PLAN");
         if (!tempPlans.isEmpty()) {
-            //plans -> beste kiezen -> als plan zetten
+            //TODO plans -> beste kiezen -> als plan zetten
             plans.add(tempPlans.get(0));
             //currentPackage = Optional.of(tempPlans.get(0).getPackages().get(0));
             tempPlans.clear();
@@ -240,59 +248,3 @@ public class Truck extends Vehicle implements TickListener, MovingRoadUser, Simu
     }
 
 }
-
-/*
- // TODO: helemaal begin: geen assigned package
-        // TODO: Paths maken
-
-        PDPModel pm = getPDPModel();
-        DynamicGraphRoadModelImpl rm = (DynamicGraphRoadModelImpl) getRoadModel();
-
-        if(!plans.isEmpty()){
-            Plan plan = getBestPlan(plans);
-            rm.followPath(this, plan.getPath(), time);
-            return;
-        }
-
-        if(currentPackage.isPresent()){
-            final boolean inCargo = pm.containerContains(this, currentPackage.get());
-            // sanity check: if it is not in our cargo AND it is also not on the
-            // RoadModel, we cannot go to curr anymore.
-            if (!inCargo && !rm.containsObject(currentPackage.get())) {
-                currentPackage = Optional.absent();
-            }
-            else if(inCargo){
-                if (rm.getPosition(this).equals(currentPackage.get().getDeliveryLocation())) {
-                    // deliver when we arrive
-                    pm.deliver(this, currentPackage.get(), time);
-                    // TODO hier moet nieuw pad worden geactiveerd?
-                    // TODO: Choose best path of all received callbacks, follow it and send intention ants.
-                }
-                else{
-                    destination = Optional.absent();
-                    tick++;
-                    if(tick >= EXPLORATION_FREQUENCY){
-                        spawnExplorationAnt();
-                        tick = 0;
-                    }
-                }
-            }
-            else{
-                // On rm but not cargo
-                if (rm.equalPosition(this, currentPackage.get())) {
-                    // pickup customer
-                    pm.pickup(this, currentPackage.get(), time);
-                }
-                destination = Optional.of(currentPackage.get().getPickupLocation());
-            }
-        }
-
-        //spawnIntentionAnt();
-
-        if (!time.hasTimeLeft()) {
-            return;
-        }
-        //TODO: MOET BEWEGEN VOLGENS PATH VAN EXPLORATIONANT
-        if(destination.isPresent())
-            getRoadModel().moveTo(this, destination.get(), time);
- */

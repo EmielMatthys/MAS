@@ -108,7 +108,7 @@ public class DelegateExample {
                     .buildDTO()));
             sim.getRandomGenerator().nextDouble();
             sim.getRandomGenerator().nextDouble();
-            //sim.getRandomGenerator().nextDouble();
+            sim.getRandomGenerator().nextDouble();
             //sim.getRandomGenerator().nextDouble();
         }
 

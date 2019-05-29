@@ -15,6 +15,7 @@ import delegate.ant.pheromone.Pheromone;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.xml.stream.Location;
 import java.util.List;
 
 import java.util.Set;
@@ -42,7 +43,7 @@ public class ExplorationAnt extends Ant implements SimulatorUser {
     private double estimatedArrival;
 
     private enum State {
-        EXPLORATION, PACKAGE, LOCATION
+        SOURCE, DESTINATION, LOCATION
     }
 
     private State antState;
@@ -61,8 +62,8 @@ public class ExplorationAnt extends Ant implements SimulatorUser {
         this.aPackage = Optional.of(aPackage);
         this.truck = truck;
         this.hops = hops;
-
-        antState = State.LOCATION;
+        if (antState == null)
+            antState = State.SOURCE;
 
         this.destination = aPackage.getPickupLocation();
 
@@ -80,7 +81,7 @@ public class ExplorationAnt extends Ant implements SimulatorUser {
     public ExplorationAnt(Point startLocation, Package aPackage, Truck truck, int hops, Point destination) {
         this(startLocation, aPackage, truck, hops);
         this.destination = destination;
-        antState = State.PACKAGE;
+        antState = State.DESTINATION;
     }
 
     public ExplorationAnt(Point startLocation, Truck truck, int hops, Point randomDest) {
@@ -92,7 +93,7 @@ public class ExplorationAnt extends Ant implements SimulatorUser {
 
         this.destination = randomDest;
 
-        antState = State.EXPLORATION;
+        antState = State.LOCATION;
 
         this.plan = new Plan(truck);
 
@@ -113,16 +114,22 @@ public class ExplorationAnt extends Ant implements SimulatorUser {
 
 
         else{
-            //getLIFETIME();
 
         }
         // Destination bereikt
         if (destination.equals(roadModel.getPosition(this))) {
-            if (aPackage.isPresent()) {
+            //If package is reached go to its destination.
+            if (antState == State.SOURCE) {
+                antState = State.DESTINATION;
+                destination = aPackage.get().getDeliveryLocation();
+            }
+            // Give plan back to truck and commit suicide
+            else if (aPackage.isPresent()) {
                 callBackToTruck();
+                LIFETIME = 0;
             }
             //destination = roadModel.getRandomPosition(sim.getRandomGenerator());
-            LIFETIME = 0;
+
         }
     }
 
@@ -139,48 +146,50 @@ public class ExplorationAnt extends Ant implements SimulatorUser {
         // too close to startlocation
         if (Point.distance(startLocation, roadModel.getPosition(this)) <= DETECTION_DISTANCE)
             return;
-
-
         if (aPackage.isPresent() && Point.distance(roadModel.getPosition(this), destination) > DETECTION_DISTANCE)
             return;
+
         List<FeasibilityPheromone> feasibilityPheromones = getDmasModel().detectPheromone(t, FeasibilityPheromone.class);
+
         if(feasibilityPheromones.isEmpty()) {
             LOGGER.warn("NO PHEROMONES");
             return;
         }
-        if(hops-- <= 0){
+        if(hops <= 0){
             //TODO report path to truck
 
 
         }
-        else { // pheromones available
-            int i = 0;
-            FeasibilityPheromone ph = null;
-            LOGGER.warn("PHEROMONES: " + feasibilityPheromones.size());
-            for(FeasibilityPheromone p : feasibilityPheromones){
-                if(i > CLONE_MAX)
-                    break;
-                // Only send 1 ant to each package //TODO CHANGE SO MORE ANTS CAN BE SPAWNED (HEURISTIC NEEDED)
-
-                if (ph == null || !ph.equals(p)) {
-                    if (aPackage.isPresent() && !p.getSourcePackage().getPickupLocation().equals(aPackage.get().getPickupLocation())) {
-                        ExplorationAnt ant = new ExplorationAnt(t.getPosition(), p.getSourcePackage(), truck, 1); //TODO hops
-                        sim.register(ant);
-                        ph = p;
-                        i++;
-                    }
-                }
-
-
-            }
-            LOGGER.warn("----------------------------------");
-            LOGGER.warn("DUPLICATED MYSELF " + i + " times");
-            plan.setDuplicator();
-            callBackToTruck();
-
+        else if (hops == 1 && antState == State.DESTINATION){ // pheromones available
+            duplicate(feasibilityPheromones, t);
         }
 
         LIFETIME = 0;
+    }
+
+    public void duplicate(List<FeasibilityPheromone> feasibilityPheromones, LocationAgent t) {
+        int i = 0;
+        FeasibilityPheromone ph = null;
+        LOGGER.warn("PHEROMONES: " + feasibilityPheromones.size());
+        for(FeasibilityPheromone p : feasibilityPheromones){
+            if(i > CLONE_MAX)
+                break;
+
+            if (ph != null && !ph.equals(p)) {
+                break;
+            }
+            if (aPackage.isPresent() && !p.getSourcePackage().getPickupLocation().equals(aPackage.get().getPickupLocation())) {
+                ExplorationAnt ant = new ExplorationAnt(t.getPosition(), p.getSourcePackage(), truck, 2); //TODO hops
+                sim.register(ant);
+                ph = p;
+                i++;
+            }
+
+
+        }
+        LOGGER.warn("----------------------------------");
+        LOGGER.warn("DUPLICATED MYSELF " + i + " times");
+        sendInitialPathToTruck();
     }
 
     @Override
@@ -188,7 +197,6 @@ public class ExplorationAnt extends Ant implements SimulatorUser {
         // Detect intention pheromones
         // if found --> stop looking
         // else --> go to destination
-
         if(!aPackage.isPresent()){
             // Truck has no package yet, make this the new one
             aPackage = aPackage.of(t);
@@ -206,6 +214,13 @@ public class ExplorationAnt extends Ant implements SimulatorUser {
 
         destination = aPackage.get().getDeliveryLocation();
 
+    }
+
+    private void sendInitialPathToTruck() {
+        plan.addToPath(destination);
+        if (aPackage.isPresent())
+            plan.addPackage(aPackage.get());
+        truck.initialPathCallback(plan);
     }
 
     private void callBackToTruck() {

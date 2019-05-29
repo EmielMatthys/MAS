@@ -36,4 +36,5 @@ public class LocationAgent implements AntAcceptor, RoadUser {
     public Point getPosition(){
         return source.getDeliveryLocation();
     }
+
 }
