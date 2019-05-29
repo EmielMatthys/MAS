@@ -15,10 +15,4 @@ public class IntentionPheromone extends Pheromone {
     public Truck getOriginator() {
         return this.truck;
     }
-
-    @Override
-    public boolean equals(Object o) {
-        return super.equals(o) ||
-                (o instanceof IntentionPheromone && truck.equals(((IntentionPheromone) o).truck));
-    }
 }

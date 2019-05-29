@@ -139,7 +139,7 @@ public class DMASModel extends AbstractModel<DMASUser> implements TickListener, 
 
     public void dropPheromone(AntAcceptor t, Pheromone pheromone) {
         if(!pheromoneMap.get(t).contains(pheromone)) {
-            pheromoneMap.get(t).add(pheromone);
+            pheromoneMap.get(t).addPerhomone(pheromone);
             simulator.register(pheromone);
         }
     }

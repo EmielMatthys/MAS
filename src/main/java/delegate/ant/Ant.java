@@ -13,7 +13,7 @@ import delegate.model.DMASUser;
 
 public abstract class Ant implements DMASUser, MovingRoadUser, TickListener {
 
-    private static double SPEED = 1;
+    protected static double SPEED = 10;
     protected int LIFETIME = 300;
 
     protected DMASModel dmasModel;

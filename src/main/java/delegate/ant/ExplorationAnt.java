@@ -49,6 +49,7 @@ public class ExplorationAnt extends Ant implements SimulatorUser {
         this.hops = hops;
         this.truck = truck;
         this.plan = plan;
+        //this.SPEED = 10;
     }
 
     @Override
@@ -121,10 +122,14 @@ public class ExplorationAnt extends Ant implements SimulatorUser {
 
         List<IntentionPheromone> intentionPheromones = getDmasModel().detectPheromone(t, IntentionPheromone.class);
 
-        if(!intentionPheromones.isEmpty()) {
+        boolean unknownIntentionPher = intentionPheromones.stream()
+                .anyMatch(pheromone -> !pheromone.getOriginator().equals(truck));
+
+        if(unknownIntentionPher) {
             markDead();
             return;
         }
+        plan.addPoint(t.getPickupLocation());
         plan.addPackage(t);
         destination = t.getDeliveryLocation();
     }

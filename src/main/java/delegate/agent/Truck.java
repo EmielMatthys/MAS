@@ -92,6 +92,8 @@ public class Truck extends Vehicle implements TickListener, MovingRoadUser, Simu
                 return;
             }
             spawnIntentionAnts();
+            if(!currentPlan.isPresent())
+                return;
 
             Point currentPos = rm.getPosition(this);
 
@@ -105,9 +107,16 @@ public class Truck extends Vehicle implements TickListener, MovingRoadUser, Simu
             }
             else{
                 if(currentPos.equals(nextPack.getPickupLocation())){
-                    pm.pickup(this, nextPack, time);
-                    //if(currentPlan.get().getNextPackage().equals(currentPlan.get().getTailPackage()))
-                        spawnForwardExplorationAnt();
+
+                    try{
+                        pm.pickup(this, nextPack, time);
+
+                    }catch (IllegalArgumentException e){
+                        currentPlan = Optional.empty();
+
+                    }
+                    spawnForwardExplorationAnt();
+
                 }
                 else
                     tryFollowPathOrCheat(currentPlan.get(), nextPack.getPickupLocation(), time);
@@ -142,7 +151,6 @@ public class Truck extends Vehicle implements TickListener, MovingRoadUser, Simu
      * sets the best plan in list of plans if not empty (currently just the first)
      */
     private void selectBestPlan() {
-        LOGGER.warn("plans size: "+plans.size());
         currentPlan = NormalPlan.getBestPlan(plans);
         plans.clear();
 
@@ -156,54 +164,21 @@ public class Truck extends Vehicle implements TickListener, MovingRoadUser, Simu
         if(pack != null) {
             ForwardExplorationAnt ant = new ForwardExplorationAnt(spawnLocation, pack, this, HOPS);
             plans.clear();
-            LOGGER.warn("Sending forward ant");
             sim.register(ant);
         }
     }
 
     private void spawnRandomExplorationAnt(){
         Point spawnLocation = TravelDistanceHelper.getNearestNode(this, getRoadModel());
-        Iterator<Package> it = getRoadModel().getObjectsOfType(Package.class).iterator();
+        Set<Package> packages = getRoadModel().getObjectsOfType(Package.class);
+        Iterator<Package> it = packages.iterator();
+
         if(it.hasNext()) {
             RandomExplorationAnt ant = new RandomExplorationAnt(spawnLocation, it.next(), HOPS, this);
             plans.clear();
-            LOGGER.warn("Sending random ant");
             sim.register(ant);
         }
     }
-
-
-    /*private void spawnExplorationAnt() {
-        if(++exp_tick < EXPLORATION_FREQUENCY)
-            return;
-        if(dispatchedExplorationAnt){
-            return;
-        }
-
-        dispatchedExplorationAnt = true;
-
-        exp_tick = 0;
-        Point spawnLocation = TravelDistanceHelper.getNearestNode(this, getRoadModel());
-
-        if(currentPlan.isPresent()){
-            // Send ants with forwarded start
-            Point lastPoint = currentPlan.get().getPath().peekLast();
-            if(lastPoint == null)
-                return;
-            ExplorationAnt newAnt = new ExplorationAnt(spawnLocation, this, HOPS, lastPoint, currentPlan.get().getPackages());
-            sim.register(newAnt);
-        }else{
-            // No plan --> random ants
-            Set<Package> packs = getRoadModel().getObjectsOfType(Package.class);
-            Iterator<Package> it = packs.iterator();
-            if(it.hasNext()){
-                ExplorationAnt ant = new ExplorationAnt(spawnLocation, it.next().getDeliveryLocation(), this, HOPS);
-                sim.register(ant);
-            }
-
-
-        }
-    }*/
 
     /**
      * Sends Intention ants to all packages in current plan
@@ -213,9 +188,11 @@ public class Truck extends Vehicle implements TickListener, MovingRoadUser, Simu
             return;
         exp_tick = 0;
 
-        LOGGER.warn("Spawning intention ants + " + currentPlan.isPresent());
         if(currentPlan.isPresent()){
             Point spawnLocation = TravelDistanceHelper.getNearestNode(this, getRoadModel());
+
+
+
             currentPlan.get().getPackages().stream()
                     .filter(aPackage -> getRoadModel().containsObject(aPackage))
                     .forEach(p -> {
@@ -237,6 +214,11 @@ public class Truck extends Vehicle implements TickListener, MovingRoadUser, Simu
             return;
 
         plans.add((NormalPlan) plan);
+    }
+
+    public void intentionCallback(){
+        //plans.clear();
+        //currentPlan = Optional.empty();
     }
 
     @Override
