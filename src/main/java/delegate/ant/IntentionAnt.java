@@ -24,12 +24,10 @@ public class IntentionAnt extends Ant implements TickListener {
     private Package pack;
 
 
-    public IntentionAnt(Point startLocation, Truck originator, Point packagePos, Queue<Point> path, Package pack) {
+    public IntentionAnt(Point startLocation, Truck originator, Point packagePos) {
         super(startLocation, Integer.MAX_VALUE);
         this.originator = originator;
-        this.path = path;
         this.packagePos = packagePos;
-        this.pack = pack;
     }
 
 
@@ -39,7 +37,7 @@ public class IntentionAnt extends Ant implements TickListener {
         if(roadModel.containsObjectAt(this, packagePos)){
             markDead();
         }else{
-            roadModel.followPath(this, path, timeLapse);
+            roadModel.moveTo(this, packagePos, timeLapse);
         }
     }
 
@@ -48,7 +46,7 @@ public class IntentionAnt extends Ant implements TickListener {
     @Override
     public void visit(Package t) {
         if(t.equals(this.pack)){
-            getDmasModel().dropPheromone(t, new IntentionPheromone(100, packagePos, originator));
+            getDmasModel().dropPheromone(t, new IntentionPheromone(100, t.getPickupLocation(), originator));
         }
     }
 }

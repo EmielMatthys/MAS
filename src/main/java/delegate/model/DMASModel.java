@@ -53,6 +53,16 @@ public class DMASModel extends AbstractModel<DMASUser> implements TickListener, 
         return result;
     }
 
+    public <Y extends Ant> List<Y> getAntsOfType(Class<Y> type){
+        ArrayList<Y> result = new ArrayList<>();
+        for(Ant a : ants){
+            if(type.isInstance(a)){
+                result.add((Y) a);
+            }
+        }
+        return result;
+    }
+
     @Override
     public boolean register(DMASUser element) {
         if(element instanceof Ant)
@@ -133,6 +143,8 @@ public class DMASModel extends AbstractModel<DMASUser> implements TickListener, 
             simulator.register(pheromone);
         }
     }
+
+
 
 
     @AutoValue

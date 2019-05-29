@@ -30,7 +30,7 @@ import java.util.Set;
 
 public class DelegateExample {
 
-    private static final int MAX_PACKAGES = 3;
+    private static final int MAX_PACKAGES = 6;
 
     public static void main(String[] args) {
         run();
@@ -74,7 +74,7 @@ public class DelegateExample {
         RandomGenerator rng = sim.getRandomGenerator();
 
         //sim.getRandomGenerator().nextDouble();
-        //sim.getRandomGenerator().nextDouble();
+        sim.getRandomGenerator().nextDouble();
         sim.getRandomGenerator().nextDouble();
 
         Point rand = rm.getRandomPosition(sim.getRandomGenerator());
