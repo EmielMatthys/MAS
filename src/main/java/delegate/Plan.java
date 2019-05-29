@@ -22,6 +22,8 @@ public class Plan implements Comparable<Plan> {
 
     private Queue<Point> path;
 
+    private boolean duplicator = false;
+
     public Plan(Truck truck) {
         this.truck = truck;
         this.packages = new ArrayList<>();
@@ -80,5 +82,13 @@ public class Plan implements Comparable<Plan> {
 
     public void removePath() {
         path.removeAll(path);
+    }
+
+    public void setDuplicator() {
+        this.duplicator = true;
+    }
+
+    public boolean getDuplicator() {
+        return this.duplicator;
     }
 }

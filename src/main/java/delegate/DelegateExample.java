@@ -31,7 +31,7 @@ import java.util.Set;
 
 public class DelegateExample {
 
-    private static final int MAX_PACKAGES = 5;
+    private static final int MAX_PACKAGES = 10;
 
     public static void main(String[] args) {
         run();
@@ -99,7 +99,7 @@ public class DelegateExample {
         sim.register(p1);
 //        sim.register(p2);
 //        sim.register(p3);
-
+        //TODO DOES NOT WORK WITHOUT INITIAL PACKAGE
         sim.register(new Truck(rng, rm.getRandomPosition(rng), p1));
 
         for(int i = 0; i < MAX_PACKAGES; i++){

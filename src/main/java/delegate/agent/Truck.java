@@ -40,9 +40,11 @@ public class Truck extends Vehicle implements TickListener, MovingRoadUser, Simu
     public static final double VEHICLE_SPEED = 0.2d;
     private static final int VEHICLE_CAPACITY = 1;
     private static final int HOPS = 2;
-    private static final int EXPLORATION_FREQUENCY = 150;
+    private static final int EXPLORATION_FREQUENCY = 100;
+    private static final int LISTENING_TICKS = 400;
     private int exp_tick = 0;
     private int int_tick = 0;
+    private int listening_ticks = 0;
 
     boolean first = true;
 
@@ -55,10 +57,12 @@ public class Truck extends Vehicle implements TickListener, MovingRoadUser, Simu
     private Optional<Point> destination;
 
     private List<Plan> plans;
+    private List<Plan> tempPlans;
 
     private Optional<Path> path;
 
     private boolean exploration;
+    private boolean listening;
 
 
 
@@ -73,6 +77,8 @@ public class Truck extends Vehicle implements TickListener, MovingRoadUser, Simu
         this.currentPackage = Optional.absent();
         this.exploration = true;
         this.plans = new ArrayList<>();
+        this.tempPlans = new ArrayList<>();
+        this.listening = false;
     }
 
 
@@ -80,18 +86,21 @@ public class Truck extends Vehicle implements TickListener, MovingRoadUser, Simu
         this(rng, startPos);
         this.exploration = true;
         this.currentPackage = Optional.of(p);
-        path = Optional.absent();
+        this.path = Optional.absent();
+        this.listening = true;
+        this.tempPlans = new ArrayList<>();
     }
 
     @Override
     protected void tickImpl(TimeLapse time) {
         RoadModel rm = getRoadModel();
         PDPModel pm = getPDPModel();
-        //TODO Path starts @DeliveryLocation but seems to work for now
 
+        if (listening)
+            handleListening();
 
         //TODO Truck should always follow a path
-        if (!plans.isEmpty()) {
+        if (!plans.isEmpty() && !listening) {
             //try next point in path
             try {
                 //LOGGER.warn(plans.get(0).toString());
@@ -104,7 +113,7 @@ public class Truck extends Vehicle implements TickListener, MovingRoadUser, Simu
                 plans.remove(0);
                 if (!plans.isEmpty() && !plans.get(0).getPackages().isEmpty())
                     currentPackage = Optional.of(plans.get(0).getPackages().get(0));
-                LOGGER.warn("PATH EMPTY");
+                //LOGGER.warn("PATH EMPTY");
             }
         }
         else spawnExplorationAnt();
@@ -122,11 +131,14 @@ public class Truck extends Vehicle implements TickListener, MovingRoadUser, Simu
                     // deliver when we arrive
                     pm.deliver(this, currentPackage.get(), time);
                     LOGGER.warn("PACKAGE DELIVERED");
+                    LOGGER.warn("----------------------");
+                    currentPackage = Optional.of(plans.get(0).getPackages().get(0));
                     exploration = true;
                 }
             } else {
                 // it is still available, go there as fast as possible
                 //rm.moveTo(this, currentPackage.get(), time);
+                //TODO Intention ants
                 if (rm.equalPosition(this, currentPackage.get())) {
                     // pickup customer
                     LOGGER.warn("PICKED UP PACKAGE");
@@ -163,7 +175,7 @@ public class Truck extends Vehicle implements TickListener, MovingRoadUser, Simu
         }
         else{
             // No current package --> random exploration
-            //LOGGER.warn("RANDOM DESTINATION");
+            LOGGER.warn("RANDOM DESTINATION");
             this.exploration = true;
             ExplorationAnt ant = new ExplorationAnt(spawnLocation,this, 1, getRoadModel().getRandomPosition(rng));
             sim.register(ant);
@@ -181,18 +193,52 @@ public class Truck extends Vehicle implements TickListener, MovingRoadUser, Simu
         this.sim = api;
     }
 
+    /**
+     * Collects all the plan of exploration ants and sets a timer when first exploration ant calls back.
+     * @param plan
+     */
     public void explorationCallback(Plan plan) {
-        //TODO Naar andere calls ook luisteren
-        LOGGER.warn("received pheromone callback: first point=" + plan.getPath().peek() + " truck pos=" + getRoadModel().getPosition(this));
-        if (!plan.getPath().isEmpty()) {
-            plan.getPath().poll();
-            this.plans.add(plan);
-        }
-        if (!plan.getPackages().isEmpty() && !currentPackage.isPresent()) {
+        //TODO receive all calls but process later
+        LOGGER.warn("received pheromone callback: first point=" + plan.getPath().peek()
+                    + " truck pos=" + getRoadModel().getPosition(this));
+        //ExplorationAnt with path
+        if (plan.getDuplicator() && !plan.getPackages().isEmpty()){
+            plans.add(plan);
             currentPackage = Optional.of(plan.getPackages().get(0));
-
+            listening = true;
+            LOGGER.warn("NOW LISTENING");
         }
+        else if (plan.getPackages().isEmpty() && !currentPackage.isPresent()) {
+            LOGGER.warn("PACKAGES IS EMPTY");
+        }
+        else if (!plan.getPath().isEmpty()) {
+            //plan.getPath().poll();
+            if (listening)
+                this.tempPlans.add(plan);
+        }
+        //if (!plan.getPackages().isEmpty() && !currentPackage.isPresent())
+        //    currentPackage = Optional.of(plan.getPackages().get(0));
     }
+
+    private void handleListening() {
+
+        if (listening_ticks++ < LISTENING_TICKS) {
+            return;
+        }
+
+        listening_ticks = 0;
+        listening = false;
+        LOGGER.warn("STOPPED LISTENING AND CHOOSING PLAN");
+        if (!tempPlans.isEmpty()) {
+            //plans -> beste kiezen -> als plan zetten
+            plans.add(tempPlans.get(0));
+            //currentPackage = Optional.of(tempPlans.get(0).getPackages().get(0));
+            tempPlans.clear();
+        }
+        else LOGGER.warn("PROBABLY LAST PACKAGE");
+
+    }
+
 }
 
 /*

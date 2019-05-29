@@ -113,7 +113,7 @@ public class ExperimentExample {
                 // gather simulation results. The objects created by the post processor
                 // end up in the ExperimentResults object that is returned by the
                 // perform(..) method of Experiment.
-                .usePostProcessor(new ExamplePostProcessor())
+                .usePostProcessor(new ExamplePostProcessor(NUM_AVGS))
 
                 // Adds the GUI just like it is added to a Simulator object.
                 .showGui(View.builder()

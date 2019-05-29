@@ -37,11 +37,9 @@ public class ExplorationAnt extends Ant implements SimulatorUser {
 
     private Plan plan;
 
-    private static final int CLONE_MAX = 100;
+    private static final int CLONE_MAX = 5;
 
     private double estimatedArrival;
-
-    private boolean state = false; //true -> Exploring path to new package; false -> Going to destination
 
     private enum State {
         EXPLORATION, PACKAGE, LOCATION
@@ -160,22 +158,26 @@ public class ExplorationAnt extends Ant implements SimulatorUser {
             FeasibilityPheromone ph = null;
             LOGGER.warn("PHEROMONES: " + feasibilityPheromones.size());
             for(FeasibilityPheromone p : feasibilityPheromones){
-                if(i++ > CLONE_MAX)
+                if(i > CLONE_MAX)
                     break;
                 // Only send 1 ant to each package //TODO CHANGE SO MORE ANTS CAN BE SPAWNED (HEURISTIC NEEDED)
-                if (ph != null && !ph.equals(p)) {
-                    break;
-                }
-                if (aPackage.isPresent() && !p.getSourcePackage().getPickupLocation().equals(aPackage.get().getPickupLocation())) {
-                    ExplorationAnt ant = new ExplorationAnt(t.getPosition(), p.getSourcePackage(), truck, 1); //TODO hops
-                    sim.register(ant);
-                    ph = p;
+
+                if (ph == null || !ph.equals(p)) {
+                    if (aPackage.isPresent() && !p.getSourcePackage().getPickupLocation().equals(aPackage.get().getPickupLocation())) {
+                        ExplorationAnt ant = new ExplorationAnt(t.getPosition(), p.getSourcePackage(), truck, 1); //TODO hops
+                        sim.register(ant);
+                        ph = p;
+                        i++;
+                    }
                 }
 
 
             }
+            LOGGER.warn("----------------------------------");
+            LOGGER.warn("DUPLICATED MYSELF " + i + " times");
+            plan.setDuplicator();
             callBackToTruck();
-            LOGGER.warn("DUPLICATED MYSELF");
+
         }
 
         LIFETIME = 0;
@@ -211,11 +213,13 @@ public class ExplorationAnt extends Ant implements SimulatorUser {
         if (aPackage.isPresent()) {
             plan.addToPath(destination);
             plan.addPackage(aPackage.get());
-            System.out.println("PACKAGE PRESENT");
+            //System.out.println("PACKAGE PRESENT");
         }
-        else plan.removePath();
+        else {
+            plan.removePath();
+        }
+        //LOGGER.warn("CALLING BACK TRUCK");
         truck.explorationCallback(plan);
-        LOGGER.warn("CALLING BACK TRUCK");
     }
 
 }
