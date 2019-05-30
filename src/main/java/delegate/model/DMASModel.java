@@ -20,6 +20,7 @@ import delegate.ant.pheromone.Pheromone;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.annotation.Nonnull;
 import java.lang.reflect.Array;
 import java.util.*;
 
@@ -47,9 +48,10 @@ public class DMASModel extends AbstractModel<DMASUser> implements TickListener, 
 
     public <Y extends Pheromone> List<Y>  detectPheromone(AntAcceptor t, Class<Y> type) {
         ArrayList<Y> result = new ArrayList<>();
-        for(AntAcceptor a : pheromoneMap.keySet()){
-            result.addAll(pheromoneMap.get(a).detectPheromone(type));
-        }
+
+        if(pheromoneMap.get(t) != null)
+            result.addAll(pheromoneMap.get(t).detectPheromone(type));
+
         return result;
     }
 
@@ -144,6 +146,14 @@ public class DMASModel extends AbstractModel<DMASUser> implements TickListener, 
         }
     }
 
+    @Override
+    @Nonnull
+    public <U> U get(Class<U> type) {
+        synchronized (this) {
+            return type.cast(this);
+        }
+    }
+
 
 
 
@@ -152,6 +162,7 @@ public class DMASModel extends AbstractModel<DMASUser> implements TickListener, 
 
         public Builder(){
             setDependencies(RoadModel.class);
+            setProvidingTypes(DMASModel.class);
         }
 
         @Override

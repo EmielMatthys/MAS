@@ -6,6 +6,7 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class PheromoneStore extends LinkedList<Pheromone> {
 
@@ -25,11 +26,10 @@ public class PheromoneStore extends LinkedList<Pheromone> {
     }
 
     public <Y extends Pheromone> List<Y>  detectPheromone(Class<Y> type) {
-        ArrayList<Y> result = new ArrayList<>();
-        for(Pheromone ph : this){
-            if(type.isInstance(ph))
-                result.add((Y) ph);
-        }
-        return result;
+        return this.stream()
+                .filter(type::isInstance)
+                .map(pheromone -> (Y) pheromone)
+                .collect(Collectors.toList());
+
     }
 }

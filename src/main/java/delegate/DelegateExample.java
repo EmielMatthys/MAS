@@ -20,6 +20,7 @@ import delegate.ant.ExplorationAnt;
 import delegate.ant.FeasibilityAnt;
 import delegate.ant.IntentionAnt;
 import delegate.model.DMASModel;
+import delegate.renderer.CustomPDPRenderer;
 import org.apache.commons.math3.random.RandomGenerator;
 import org.eclipse.swt.graphics.RGB;
 
@@ -30,7 +31,10 @@ import java.util.Set;
 
 public class DelegateExample {
 
-    private static final int MAX_PACKAGES = 8;
+    private static final int MAX_PACKAGES = 10;
+    private static final int MAX_TRUCKS = 3;
+    private static final double PROB_NEW_TRUCK = 0.005;
+    private static final double PROB_NEW_PACK = 0.005;
 
     public static void main(String[] args) {
         run();
@@ -50,13 +54,14 @@ public class DelegateExample {
                                 Truck.class, "/graphics/flat/flatbed-truck-32.png")
                         .withColorAssociation(
                                 ExplorationAnt.class, new RGB(0, 255, 0))
-                        //.withColorAssociation(
-                        //        FeasibilityAnt.class, new RGB(0, 0, 255))
+//                        .withColorAssociation(
+//                                FeasibilityAnt.class, new RGB(0, 0, 255))
                         .withColorAssociation(
                                 IntentionAnt.class, new RGB(255, 0, 0))
                         .withColorAssociation(
                                 LocationAgent.class, new RGB( 125, 125, 0))
                 )
+                .with(CustomPDPRenderer.builder())
                 ;
 
 
@@ -65,7 +70,7 @@ public class DelegateExample {
                         RoadModelBuilders.dynamicGraph(AGVExample.GraphCreator.createTestGraph())
 //                                .withCollisionAvoidance()
                                 .withDistanceUnit(SI.METER).withSpeedUnit(NonSI.KILOMETERS_PER_HOUR))
-                .addModel(viewBuilder)
+                .addModel(viewBuilder.withAutoClose().withAutoPlay())
                 .addModel(DefaultPDPModel.builder())
                 .addModel(DMASModel.builder())
                 .build();
@@ -74,7 +79,7 @@ public class DelegateExample {
         RandomGenerator rng = sim.getRandomGenerator();
 
         //sim.getRandomGenerator().nextDouble();
-        sim.getRandomGenerator().nextDouble();
+        //sim.getRandomGenerator().nextDouble();
         sim.getRandomGenerator().nextDouble();
 
         Point rand = rm.getRandomPosition(sim.getRandomGenerator());
@@ -98,18 +103,45 @@ public class DelegateExample {
 //        sim.register(p2);
 //        sim.register(p3);
 
-        //sim.register(new Truck(rng, rm.getRandomPosition(rng)));
         sim.register(new Truck(rng, rm.getRandomPosition(rng)));
+        //sim.register(new Truck(rng, rm.getRandomPosition(rng)));
 
         for(int i = 0; i < MAX_PACKAGES; i++){
             sim.register(new Package(Parcel.builder(rm.getRandomPosition(rng),
                     rm.getRandomPosition(rng))
+                    .neededCapacity(1)
                     .buildDTO()));
             sim.getRandomGenerator().nextDouble();
             sim.getRandomGenerator().nextDouble();
             sim.getRandomGenerator().nextDouble();
             sim.getRandomGenerator().nextDouble();
         }
+
+        sim.addTickListener(new TickListener() {
+            @Override
+            public void tick(TimeLapse timeLapse) {
+                Set<Truck> trucks = rm.getObjectsOfType(Truck.class);
+                Set<Package> packs = rm.getObjectsOfType(Package.class);
+
+                if (trucks.size() < MAX_TRUCKS && rng.nextDouble() < PROB_NEW_TRUCK) {
+                    sim.register(new Truck(rng, rm.getRandomPosition(rng)));
+                }
+
+                if(packs.size() < MAX_PACKAGES && rng.nextDouble() < PROB_NEW_PACK){
+                    sim.register(new Package(
+                            Parcel.builder(rm.getRandomPosition(rng),
+                                    rm.getRandomPosition(rng))
+                            .neededCapacity(1)
+                            .buildDTO()
+                    ));
+                }
+            }
+
+            @Override
+            public void afterTick(TimeLapse timeLapse) {
+
+            }
+        });
 
         sim.start();
 

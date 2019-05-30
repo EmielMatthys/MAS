@@ -10,6 +10,6 @@ public class RandomExplorationAnt extends ExplorationAnt {
 
 
     public RandomExplorationAnt(Point spawn, Package destination, int hops, Truck truck) {
-        super(spawn, destination.getDeliveryLocation(), hops, truck, new NormalPlan());
+        super(spawn, destination.getPickupLocation(), hops-1, truck, new NormalPlan());
     }
 }

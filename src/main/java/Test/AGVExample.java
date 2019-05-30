@@ -54,7 +54,7 @@ public class AGVExample {
 //                        .withMargin(VEHICLE_LENGTH))
 //                .with(AGVRenderer.builder()
 //                        .withDifferentColorsForVehicles())
-                .with(GraphRoadModelRenderer.builder().withNodeCoordinates())
+                .with(GraphRoadModelRenderer.builder())
                 .with(CustomAGVRenderer.builder(CustomAGVRenderer.Language.ENGLISH))
                 .with(CommRenderer.builder());
 

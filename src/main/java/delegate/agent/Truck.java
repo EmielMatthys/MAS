@@ -113,7 +113,7 @@ public class Truck extends Vehicle implements TickListener, MovingRoadUser, Simu
 
                     }catch (IllegalArgumentException e){
                         currentPlan = Optional.empty();
-
+                        return;
                     }
                     spawnForwardExplorationAnt();
 
@@ -170,13 +170,18 @@ public class Truck extends Vehicle implements TickListener, MovingRoadUser, Simu
 
     private void spawnRandomExplorationAnt(){
         Point spawnLocation = TravelDistanceHelper.getNearestNode(this, getRoadModel());
-        Set<Package> packages = getRoadModel().getObjectsOfType(Package.class);
-        Iterator<Package> it = packages.iterator();
 
-        if(it.hasNext()) {
-            RandomExplorationAnt ant = new RandomExplorationAnt(spawnLocation, it.next(), 1, this); // Random ants have one hop
+        Set<Package> packages = getRoadModel().getObjectsOfType(Package.class);
+        if(packages.size() <= 0)
+            return;
+
+        Optional<Package> p = packages.stream().skip(rng.nextInt(packages.size() )).findFirst();
+
+        if(p.isPresent()){
+            RandomExplorationAnt ant = new RandomExplorationAnt(spawnLocation, p.get(), 1, this); // Random ants have one hop
             plans.clear();
             sim.register(ant);
+            LOGGER.warn("Sent out random ant!");
         }
     }
 

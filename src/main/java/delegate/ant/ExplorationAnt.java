@@ -84,8 +84,8 @@ public class ExplorationAnt extends Ant implements SimulatorUser {
             truck.explorationCallback(plan);
         }
         else {
-            boolean clonedAtleasOne = cloneFromPheromones(feasibilityPheromones, t.getPosition());
-            if(!clonedAtleasOne){
+            boolean clonedAtLeastOne = cloneFromPheromones(feasibilityPheromones, t.getPosition());
+            if(!clonedAtLeastOne){
                 hops = 0;
                 return;
             }
