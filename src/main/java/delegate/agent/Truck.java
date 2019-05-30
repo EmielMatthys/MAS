@@ -32,7 +32,7 @@ public class Truck extends Vehicle implements TickListener, MovingRoadUser, Simu
     private static final int VEHICLE_CAPACITY = 1;
     private static final int HOPS = 2;
     private static final int EXPLORATION_FREQUENCY = 200;
-    private static final int INTENTION_FREQUENCY = 200;
+    private static final int INTENTION_DELAY = 30;
     private int exp_tick = 0;
     private int int_tick = 0;
 
@@ -59,7 +59,7 @@ public class Truck extends Vehicle implements TickListener, MovingRoadUser, Simu
         this.plans = new ArrayList<>();
     }
 
-    private int tick_test = 200;
+    private int tick_test = 80;
     @Override
     protected void tickImpl(TimeLapse time) {
         if(tick_test-- > 0)
@@ -174,7 +174,7 @@ public class Truck extends Vehicle implements TickListener, MovingRoadUser, Simu
         Iterator<Package> it = packages.iterator();
 
         if(it.hasNext()) {
-            RandomExplorationAnt ant = new RandomExplorationAnt(spawnLocation, it.next(), HOPS, this);
+            RandomExplorationAnt ant = new RandomExplorationAnt(spawnLocation, it.next(), 1, this); // Random ants have one hop
             plans.clear();
             sim.register(ant);
         }
@@ -184,13 +184,12 @@ public class Truck extends Vehicle implements TickListener, MovingRoadUser, Simu
      * Sends Intention ants to all packages in current plan
      */
     private void spawnIntentionAnts() {
-        if(++exp_tick < INTENTION_FREQUENCY)
+        if(++exp_tick < INTENTION_DELAY)
             return;
         exp_tick = 0;
 
         if(currentPlan.isPresent()){
             Point spawnLocation = TravelDistanceHelper.getNearestNode(this, getRoadModel());
-
 
 
             currentPlan.get().getPackages().stream()
