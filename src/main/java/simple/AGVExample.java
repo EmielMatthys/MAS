@@ -1,4 +1,4 @@
-package Test;
+package simple;
 
 import com.github.rinde.rinsim.core.Simulator;
 import com.github.rinde.rinsim.core.model.comm.CommModel;

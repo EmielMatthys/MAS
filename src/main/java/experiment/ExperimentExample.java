@@ -1,9 +1,8 @@
 package experiment;
 
-import Test.AGVExample;
-import Test.CustomAGVRenderer;
-import Test.Package;
-import Test.SimpleAgent;
+import simple.CustomAGVRenderer;
+import simple.Package;
+import simple.SimpleAgent;
 import com.github.rinde.rinsim.core.SimulatorAPI;
 import com.github.rinde.rinsim.core.model.comm.CommModel;
 import com.github.rinde.rinsim.core.model.pdp.*;

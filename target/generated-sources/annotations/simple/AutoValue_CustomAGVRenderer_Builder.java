@@ -1,11 +1,11 @@
-package Test;
+package simple;
 
 
 @javax.annotation.Generated("com.google.auto.value.processor.AutoValueProcessor")
-final class AutoValue_CustomRenderer_Builder extends CustomAGVRenderer.Builder {
+final class AutoValue_CustomAGVRenderer_Builder extends CustomAGVRenderer.Builder {
   private final CustomAGVRenderer.Language language;
 
-  AutoValue_CustomRenderer_Builder(
+  AutoValue_CustomAGVRenderer_Builder(
       CustomAGVRenderer.Language language) {
     if (language == null) {
       throw new NullPointerException("Null language");
