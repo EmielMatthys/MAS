@@ -22,6 +22,7 @@ import com.github.rinde.rinsim.ui.renderers.GraphRoadModelRenderer;
 import com.github.rinde.rinsim.ui.renderers.RoadUserRenderer;
 import com.github.rinde.rinsim.util.TimeWindow;
 import com.google.common.base.Optional;
+import graph.GraphCreator;
 import org.apache.commons.math3.random.RandomGenerator;
 
 
@@ -179,7 +180,7 @@ public class ExperimentExample {
 
 
         scenario.scenarioLength(M60)
-                .addModel(RoadModelBuilders.staticGraph(AGVExample.GraphCreator.createTestGraph())
+                .addModel(RoadModelBuilders.staticGraph(GraphCreator.createSmallGraph())
 //                                .withCollisionAvoidance()
                         .withDistanceUnit(SI.METER).withSpeedUnit(NonSI.KILOMETERS_PER_HOUR))
                 .addModel(DefaultPDPModel.builder())
@@ -194,7 +195,7 @@ public class ExperimentExample {
             public void handleTimedEvent(AddVehicleEvent event, SimulatorAPI sim) {
                 // add your own vehicle to the simulator here
                 RandomGenerator rng = sim.getRandomGenerator();
-                Point start = AGVExample.GraphCreator.createTestGraph().getRandomNode(rng);
+                Point start = GraphCreator.createSmallGraph().getRandomNode(rng);
                 SimpleAgent agent = new SimpleAgent(rng, event.getVehicleDTO());
                 agent.setLocation(start);
                 sim.register(
@@ -209,7 +210,7 @@ public class ExperimentExample {
             public void handleTimedEvent(AddParcelEvent event, SimulatorAPI sim) {
 
                 RandomGenerator rng = sim.getRandomGenerator();
-                ListenableGraph graph = AGVExample.GraphCreator.createTestGraph();
+                ListenableGraph graph = GraphCreator.createSmallGraph();
 
                 ParcelDTO builder = Parcel.builder(graph.getRandomNode(rng), graph.getRandomNode(rng))
                         .neededCapacity(0)
