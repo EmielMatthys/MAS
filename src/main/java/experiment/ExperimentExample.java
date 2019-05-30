@@ -1,5 +1,6 @@
 package experiment;
 
+import simple.AGVExample;
 import simple.CustomAGVRenderer;
 import simple.Package;
 import simple.SimpleAgent;
@@ -38,7 +39,7 @@ public class ExperimentExample {
 
     private static final int VEHICLE_CAPACITY = 1;
     private static final double VEHICLE_SPEED = 1000d;
-    private static final int NUM_AVGS = 5;
+    private static final int NUM_AGVS = 5;
     private static final int NUM_PACKAGES = 20;
 
     private static final Point RESOLUTION = new Point(700, 600);
@@ -47,9 +48,6 @@ public class ExperimentExample {
     private static final Point P1_DELIVERY = new Point(4, 2);
 
     private static long M1 = 60 * 1000L;
-    private static final long M4 = 4 * 60 * 1000L;
-    private static final long M5 = 5 * 60 * 1000L;
-    private static final long M7 = 7 * 60 * 1000L;
     private static final long M60 = 60 * 60 * 1000L;
 
     private static RoadModel rm;
@@ -91,6 +89,7 @@ public class ExperimentExample {
                         .addModel(StatsTracker.builder())
                         .build())
 
+
                 // Adds the newly constructed scenario to the experiment. Every
                 // configuration will be run on every scenario.
                 .addScenario(createScenario())
@@ -113,7 +112,7 @@ public class ExperimentExample {
                 // gather simulation results. The objects created by the post processor
                 // end up in the ExperimentResults object that is returned by the
                 // perform(..) method of Experiment.
-                .usePostProcessor(new ExamplePostProcessor())
+                .usePostProcessor(new ExamplePostProcessor(NUM_AGVS))
 
                 // Adds the GUI just like it is added to a Simulator object.
                 .showGui(View.builder()
@@ -157,19 +156,19 @@ public class ExperimentExample {
 
         Scenario.Builder scenario =  Scenario.builder();
 
-        for (int i = 0; i < NUM_AVGS; i++) {
+        for (int i = 0; i < NUM_AGVS; i++) {
             scenario.addEvent(AddVehicleEvent.create(-1, VehicleDTO.builder()
-                            .speed(VEHICLE_SPEED)
-                            .capacity(VEHICLE_CAPACITY)
-                            .build()));
+                    .speed(VEHICLE_SPEED)
+                    .capacity(VEHICLE_CAPACITY)
+                    .build()));
         }
 
         for (int i = 0; i < NUM_PACKAGES; i++) {
             scenario.addEvent(AddParcelEvent.create(Parcel.builder(P1_PICKUP, P1_DELIVERY)
                     .neededCapacity(0)
                     .orderAnnounceTime(M1)
-                    .pickupTimeWindow(TimeWindow.create(M1, M60))
-                    .deliveryTimeWindow(TimeWindow.create(M4, M7))
+                    .pickupTimeWindow(TimeWindow.create(M1, M1))
+                    .deliveryTimeWindow(TimeWindow.create(M1, M1))
                     .buildDTO()));
             M1 = M1 + 60 * 1000L;
         }
@@ -183,7 +182,7 @@ public class ExperimentExample {
 //                                .withCollisionAvoidance()
                         .withDistanceUnit(SI.METER).withSpeedUnit(NonSI.KILOMETERS_PER_HOUR))
                 .addModel(DefaultPDPModel.builder())
-                .setStopCondition(StopConditions.limitedTime(M60));
+                .setStopCondition(CustomStopCondition.vehiclesDone());
         return scenario.build();
     }
 
@@ -211,11 +210,15 @@ public class ExperimentExample {
                 RandomGenerator rng = sim.getRandomGenerator();
                 ListenableGraph graph = GraphCreator.createSmallGraph();
 
+                Package p = new Package(event.getParcelDTO());
+
+
+
                 ParcelDTO builder = Parcel.builder(graph.getRandomNode(rng), graph.getRandomNode(rng))
                         .neededCapacity(0)
-                        .orderAnnounceTime(M1)
-                        .pickupTimeWindow(TimeWindow.create(M1, M60))
-                        .deliveryTimeWindow(TimeWindow.create(M4, M7))
+                        .orderAnnounceTime(p.getOrderAnnounceTime())
+                        .pickupTimeWindow(p.getPickupTimeWindow())
+                        .deliveryTimeWindow(p.getDeliveryTimeWindow())
                         .buildDTO();
 
 
@@ -224,6 +227,5 @@ public class ExperimentExample {
             }
         }
     }
-
 
 }

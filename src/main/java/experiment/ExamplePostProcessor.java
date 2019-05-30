@@ -1,38 +1,78 @@
 package experiment;
 
 import com.github.rinde.rinsim.core.Simulator;
+import com.github.rinde.rinsim.core.model.Model;
 import com.github.rinde.rinsim.core.model.pdp.Vehicle;
 import com.github.rinde.rinsim.core.model.road.RoadModel;
 import com.github.rinde.rinsim.experiment.Experiment;
 import com.github.rinde.rinsim.experiment.PostProcessor;
+import com.github.rinde.rinsim.pdptw.common.StatsTracker;
 
+import java.io.BufferedWriter;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.util.List;
 import java.util.Set;
 
 public class ExamplePostProcessor implements PostProcessor<String> {
 
 
-    ExamplePostProcessor() {}
+    private int NUM_AGVS;
+
+    ExamplePostProcessor(int agv) {
+        this.NUM_AGVS = agv;
+    }
 
     @Override
     public String collectResults(Simulator sim, Experiment.SimArgs args) {
-        final Set<Vehicle> vehicles = sim.getModelProvider()
-                .getModel(RoadModel.class).getObjectsOfType(Vehicle.class);
+        long delT = 0;
+        long pickT = 0;
+
+        List<Model<?>> models = sim.getModels().asList();
+        for (Model<?> model : models ) {
+            if (model instanceof StatsTracker) {
+                delT = ((StatsTracker) model).getStatistics().deliveryTardiness;
+                pickT = ((StatsTracker) model).getStatistics().pickupTardiness;
+            }
+        }
+
+        try {
+
+            FileWriter fwPick = new FileWriter("pickuptimes_" + NUM_AGVS + ".txt", true);
+            BufferedWriter writerPick = new BufferedWriter(fwPick);
+            FileWriter fwDel = new FileWriter("deliverytimes_" + NUM_AGVS +".txt", true);
+            BufferedWriter writerDel = new BufferedWriter(fwDel);
+
+
+            final StringBuilder sbPick = new StringBuilder();
+            sbPick.append(delT);
+
+            writerPick.write(sbPick.toString());
+            writerPick.newLine();
+
+            final StringBuilder sbDel = new StringBuilder();
+            sbDel.append(pickT);
+            writerDel.newLine();
+
+
+
+            writerPick.close();
+            fwPick.close();
+            writerDel.close();
+            fwDel.close();
+
+        } catch (IOException e) {
+
+        }
+
 
         // Construct a result string based on the simulator state, of course, in
         // actual code the result should not be a string but a value object
         // containing the values of interest.
         final StringBuilder sb = new StringBuilder();
-        if (vehicles.isEmpty()) {
-            sb.append("No vehicles were added");
-        } else {
-            sb.append(vehicles.size()).append(" vehicles were added");
-        }
+        sb.append("DeliveryTardiness: ").append(delT);
+        sb.append(" PickupTardiness: ").append(pickT);
 
-        if (sim.getCurrentTime() >= args.getScenario().getTimeWindow().end()) {
-            sb.append(", simulation has completed.");
-        } else {
-            sb.append(", simulation was stopped prematurely.");
-        }
         return sb.toString();}
 
     @Override

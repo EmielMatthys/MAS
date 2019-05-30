@@ -26,8 +26,8 @@ public class AGVExample {
     private static final int NUM_AGVS = 7;
     private static final long TEST_END_TIME = 10 * 60 * 1000L;
     private static final int TEST_SPEED_UP = 16;
-    private static final int NUM_PARCELS = 1;
-    private static final double NEW_PACKAGE_PROB = 0.000;
+    private static final int NUM_PARCELS = 7;
+    private static final double NEW_PACKAGE_PROB = 0.05;
 
     private AGVExample() {}
 
@@ -93,7 +93,7 @@ public class AGVExample {
         }
         RandomGenerator rng = sim.getRandomGenerator();
 
-        for (int i = 0; i < NUM_PARCELS; i++){
+        for (int i = 0; i < 4; i++){
             sim.register(new Package(
                     Parcel.builder(roadModel.getRandomPosition(rng),
                             roadModel.getRandomPosition(rng))
