@@ -13,12 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package experiment;
+package experiment.common;
 
 import com.github.rinde.rinsim.core.model.pdp.Parcel;
 import com.github.rinde.rinsim.core.model.pdp.Vehicle;
 import com.github.rinde.rinsim.event.Event;
-import com.github.rinde.rinsim.pdptw.common.StatsProvider;
 
 /**
  * Event dispatched by a {@link StatsProvider} indicating that some statistic
@@ -32,7 +31,7 @@ public class StatsEvent extends Event {
   private final long time;
 
   StatsEvent(Enum<?> type, Object pIssuer, Parcel p, Vehicle v,
-             long tar, long tim) {
+      long tar, long tim) {
     super(type, pIssuer);
     parcel = p;
     vehicle = v;

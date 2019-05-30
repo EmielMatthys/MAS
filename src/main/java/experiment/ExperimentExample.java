@@ -1,9 +1,9 @@
 package experiment;
 
-import com.github.rinde.rinsim.pdptw.common.*;
 import delegate.agent.Truck;
 import delegate.model.DMASModel;
 import delegate.renderer.CustomPDPRenderer;
+import experiment.common.*;
 import simple.CustomAGVRenderer;
 import simple.Package;
 import simple.SimpleAgent;
@@ -27,8 +27,6 @@ import com.google.common.base.Optional;
 import graph.GraphCreator;
 import org.apache.commons.math3.random.RandomGenerator;
 
-
-
 import javax.measure.unit.NonSI;
 import javax.measure.unit.SI;
 import java.util.ArrayList;
@@ -40,7 +38,7 @@ import static com.google.common.base.Preconditions.checkArgument;
 public class ExperimentExample {
 
     private static final int VEHICLE_CAPACITY = 1;
-    private static final double VEHICLE_SPEED = 1000d;
+    private static final double VEHICLE_SPEED = 0.2;
     private static final int NUM_AGVS = 5;
     private static final int NUM_PACKAGES = 20;
 

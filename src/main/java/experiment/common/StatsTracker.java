@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package experiment;
+package experiment.common;
 
 import com.github.rinde.rinsim.core.model.DependencyProvider;
 import com.github.rinde.rinsim.core.model.Model.AbstractModelVoid;
@@ -34,10 +34,6 @@ import com.github.rinde.rinsim.event.EventAPI;
 import com.github.rinde.rinsim.event.EventDispatcher;
 import com.github.rinde.rinsim.event.Listener;
 import com.github.rinde.rinsim.geom.Point;
-import com.github.rinde.rinsim.pdptw.common.AddParcelEvent;
-import com.github.rinde.rinsim.pdptw.common.AddVehicleEvent;
-import com.github.rinde.rinsim.pdptw.common.StatisticsDTO;
-import com.github.rinde.rinsim.pdptw.common.StatsProvider;
 import com.github.rinde.rinsim.scenario.ScenarioController;
 import com.github.rinde.rinsim.scenario.ScenarioController.ScenarioEvent;
 import com.github.rinde.rinsim.scenario.TimeOutEvent;
@@ -73,7 +69,7 @@ public final class StatsTracker extends AbstractModelVoid implements
   final RoadModel roadModel;
 
   StatsTracker(ScenarioController scenContr, Clock c, RoadModel rm,
-               PDPModel pm) {
+      PDPModel pm) {
     clock = c;
     roadModel = rm;
 
@@ -203,7 +199,7 @@ public final class StatsTracker extends AbstractModelVoid implements
         totalTime += me.pathProgress.time().getValue();
         // if we are closer than 10 cm to the depot, we say we are 'at'
         // the depot
-        if ( me.roadUser instanceof Vehicle && Point.distance(me.roadModel.getPosition(me.roadUser),
+        if (me.roadUser instanceof Vehicle && Point.distance(me.roadModel.getPosition(me.roadUser),
           ((Vehicle) me.roadUser).getStartPosition()) < MOVE_THRESHOLD) {
           // only override time if the vehicle did actually move
           if (me.pathProgress.distance().getValue()
