@@ -59,6 +59,14 @@ public class Truck extends Vehicle implements TickListener, MovingRoadUser, Simu
         this.plans = new ArrayList<>();
     }
 
+    public Truck(RandomGenerator rng, VehicleDTO dto) {
+        super(dto);
+        this.rng = rng;
+
+        currentPlan = Optional.empty();
+        this.plans = new ArrayList<>();
+    }
+
     private int tick_test = 80;
     @Override
     protected void tickImpl(TimeLapse time) {
@@ -229,5 +237,9 @@ public class Truck extends Vehicle implements TickListener, MovingRoadUser, Simu
     public boolean initialize(DMASModel dmasModel) {
         this.dmasModel = dmasModel;
         return true;
+    }
+
+    public void setStartLocation(Point p) {
+        super.setStartPosition(p);
     }
 }

@@ -1,6 +1,8 @@
 package experiment;
 
-import simple.AGVExample;
+import delegate.agent.Truck;
+import delegate.model.DMASModel;
+import delegate.renderer.CustomPDPRenderer;
 import simple.CustomAGVRenderer;
 import simple.Package;
 import simple.SimpleAgent;
@@ -75,11 +77,11 @@ public class ExperimentExample {
                         // NOTE: this example uses 'namedHandler's for Depots and Parcels, while
                         // very useful for debugging these should not be used in production as
                         // these are not thread safe. Use the 'defaultHandler()' instead.
-                        .addEventHandler(AddParcelEvent.class, CustomPackageHandler.INSTANCE)
+                        .addEventHandler(AddParcelEvent.class, DelegatePackageHandler.INSTANCE)
                         // There is no default handle for vehicle events, here a non functioning
                         // handler is added, it can be changed to add a custom vehicle to the
                         // simulator.
-                        .addEventHandler(AddVehicleEvent.class, experiment.ExperimentExample.CustomVehicleHandler.INSTANCE)
+                        .addEventHandler(AddVehicleEvent.class, DelegateTruckHandler.INSTANCE)
                         .addEventHandler(TimeOutEvent.class, TimeOutEvent.ignoreHandler())
                         // Note: if you multi-agent system requires the aid of a model (e.g.
                         // CommModel) it can be added directly in the configuration. Models that
@@ -87,6 +89,9 @@ public class ExperimentExample {
                         // scenario as they are not part of the problem.
                         .addModel(CommModel.builder())
                         .addModel(StatsTracker.builder())
+                        //.addModel(DefaultPDPModel.builder())
+                        .addModel(DMASModel.builder())
+                        .addModel(CustomPDPRenderer.builder())
                         .build())
 
 
@@ -120,9 +125,9 @@ public class ExperimentExample {
                         .with(CustomAGVRenderer.builder(CustomAGVRenderer.Language.ENGLISH))
                         .with(RoadUserRenderer.builder()
                                 .withImageAssociation(
-                                        Package.class, "/graphics/perspective/deliverypackage2.png")
+                                        delegate.agent.Package.class, "/graphics/perspective/deliverypackage2.png")
                                 .withImageAssociation(
-                                        SimpleAgent.class, "/graphics/flat/flatbed-truck-32.png"))
+                                        Truck.class, "/graphics/flat/flatbed-truck-32.png"))
                         .with(CommRenderer.builder())
                         .with(TimeLinePanel.builder())
                         .with(RouteRenderer.builder())
@@ -186,7 +191,7 @@ public class ExperimentExample {
         return scenario.build();
     }
 
-    public enum CustomVehicleHandler implements TimedEventHandler<AddVehicleEvent> {
+    public enum SimpleAgentHandler implements TimedEventHandler<AddVehicleEvent> {
         INSTANCE {
             @Override
 
@@ -202,7 +207,7 @@ public class ExperimentExample {
         }
     }
 
-    public enum CustomPackageHandler implements  TimedEventHandler<AddParcelEvent> {
+    public enum SimplePackageHandler implements  TimedEventHandler<AddParcelEvent> {
         INSTANCE {
             @Override
             public void handleTimedEvent(AddParcelEvent event, SimulatorAPI sim) {
@@ -223,6 +228,48 @@ public class ExperimentExample {
 
 
                 Package pack = new Package(builder);
+                sim.register(pack);
+            }
+        }
+    }
+
+    public enum DelegateTruckHandler implements TimedEventHandler<AddVehicleEvent> {
+        INSTANCE {
+            @Override
+
+            public void handleTimedEvent(AddVehicleEvent event, SimulatorAPI sim) {
+                // add your own vehicle to the simulator here
+                RandomGenerator rng = sim.getRandomGenerator();
+                Point start = GraphCreator.createSmallGraph().getRandomNode(rng);
+                Truck agent = new Truck(rng, event.getVehicleDTO());
+                agent.setStartLocation(start);
+                sim.register(
+                        agent);
+            }
+        }
+    }
+
+    public enum DelegatePackageHandler implements  TimedEventHandler<AddParcelEvent> {
+        INSTANCE {
+            @Override
+            public void handleTimedEvent(AddParcelEvent event, SimulatorAPI sim) {
+
+                RandomGenerator rng = sim.getRandomGenerator();
+                ListenableGraph graph = GraphCreator.createSmallGraph();
+
+                delegate.agent.Package p = new delegate.agent.Package(event.getParcelDTO());
+
+
+
+                ParcelDTO builder = Parcel.builder(graph.getRandomNode(rng), graph.getRandomNode(rng))
+                        .neededCapacity(0)
+                        .orderAnnounceTime(p.getOrderAnnounceTime())
+                        .pickupTimeWindow(p.getPickupTimeWindow())
+                        .deliveryTimeWindow(p.getDeliveryTimeWindow())
+                        .buildDTO();
+
+
+                delegate.agent.Package pack = new delegate.agent.Package(builder);
                 sim.register(pack);
             }
         }
