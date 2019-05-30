@@ -2,10 +2,7 @@ package delegate;
 
 import delegate.ant.pheromone.Pheromone;
 
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.LinkedList;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 
 public class PheromoneStore extends LinkedList<Pheromone> {
@@ -26,10 +23,11 @@ public class PheromoneStore extends LinkedList<Pheromone> {
     }
 
     public <Y extends Pheromone> List<Y>  detectPheromone(Class<Y> type) {
-        return this.stream()
+        List<Y> result = ((PheromoneStore) this.clone()).stream()
                 .filter(type::isInstance)
                 .map(pheromone -> (Y) pheromone)
                 .collect(Collectors.toList());
+        return result;
 
     }
 }
