@@ -38,6 +38,15 @@ import static com.google.common.base.Preconditions.checkArgument;
 
 public class ExperimentExample {
 
+    /**
+     * To change between simple and delegate
+     *
+     * line 51 -> Simple : VEHICLE_SPEED = 1000d / Delegate VEHICLE_SPEED = 0.2d
+     * line 85 -> Choose one of the two
+     * line 89 -> Choose one of the two
+     * line 99 -> Comment out if you want to run simple example
+     */
+
     private static final int VEHICLE_CAPACITY = 1;
     private static final double VEHICLE_SPEED = 0.2;
     private static final int NUM_AGVS = 5;
@@ -73,24 +82,24 @@ public class ExperimentExample {
         // Starts the experiment builder.
         results = Experiment.builder()
                 .addConfiguration(MASConfiguration.builder()
-                        // NOTE: this example uses 'namedHandler's for Depots and Parcels, while
-                        // very useful for debugging these should not be used in production as
-                        // these are not thread safe. Use the 'defaultHandler()' instead.
+                        //Choose one of two
+                        //.addEventHandler(AddParcelEvent.class, SimplePackageHandler.INSTANCE)
                         .addEventHandler(AddParcelEvent.class, DelegatePackageHandler.INSTANCE)
-                        // There is no default handle for vehicle events, here a non functioning
-                        // handler is added, it can be changed to add a custom vehicle to the
-                        // simulator.
+
+                        //Choose one of two
+                        //.addEventHandler(AddVehicleEvent.class, SimpleAgentHandler.INSTANCE)
                         .addEventHandler(AddVehicleEvent.class, DelegateTruckHandler.INSTANCE)
+
+
                         .addEventHandler(TimeOutEvent.class, TimeOutEvent.ignoreHandler())
-                        // Note: if you multi-agent system requires the aid of a model (e.g.
-                        // CommModel) it can be added directly in the configuration. Models that
-                        // are only used for the solution side should not be added in the
-                        // scenario as they are not part of the problem.
+
                         .addModel(CommModel.builder())
                         .addModel(StatsTracker.builder())
-                        //.addModel(DefaultPDPModel.builder())
+
+                        //Comment out if you want to run simple
                         .addModel(DMASModel.builder())
                         .addModel(CustomPDPRenderer.builder())
+
                         .build())
 
 
