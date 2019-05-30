@@ -1,10 +1,10 @@
 package experiment;
 
 
+import com.github.rinde.rinsim.pdptw.common.StatisticsDTO;
+import com.github.rinde.rinsim.pdptw.common.StatsProvider;
 import com.github.rinde.rinsim.scenario.StopCondition;
 import com.google.common.collect.ImmutableSet;
-import experiment.common.StatisticsDTO;
-import experiment.common.StatsProvider;
 
 public final class CustomStopCondition {
 

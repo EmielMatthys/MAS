@@ -4,7 +4,7 @@ import com.github.rinde.rinsim.core.Simulator;
 import com.github.rinde.rinsim.core.model.Model;
 import com.github.rinde.rinsim.experiment.Experiment;
 import com.github.rinde.rinsim.experiment.PostProcessor;
-import experiment.common.StatsTracker;
+import com.github.rinde.rinsim.pdptw.common.StatsTracker;
 
 import java.io.BufferedWriter;
 import java.io.FileWriter;

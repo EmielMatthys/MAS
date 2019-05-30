@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package experiment.common;
+package com.github.rinde.rinsim.pdptw.common;
 
 import com.github.rinde.rinsim.core.model.DependencyProvider;
 import com.github.rinde.rinsim.core.model.Model.AbstractModelVoid;
@@ -62,14 +62,14 @@ import static com.google.common.collect.Maps.newLinkedHashMap;
  * @author Rinde van Lon
  */
 public final class StatsTracker extends AbstractModelVoid implements
-        StatsProvider {
+    StatsProvider {
   final EventDispatcher eventDispatcher;
   final TheListener theListener;
   final Clock clock;
   final RoadModel roadModel;
 
   StatsTracker(ScenarioController scenContr, Clock c, RoadModel rm,
-      PDPModel pm) {
+               PDPModel pm) {
     clock = c;
     roadModel = rm;
 
