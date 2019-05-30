@@ -1,5 +1,6 @@
 package experiment;
 
+import com.github.rinde.rinsim.pdptw.common.*;
 import delegate.agent.Truck;
 import delegate.model.DMASModel;
 import delegate.renderer.CustomPDPRenderer;
@@ -16,7 +17,6 @@ import com.github.rinde.rinsim.experiment.ExperimentResults;
 import com.github.rinde.rinsim.experiment.MASConfiguration;
 import com.github.rinde.rinsim.geom.ListenableGraph;
 import com.github.rinde.rinsim.geom.Point;
-import com.github.rinde.rinsim.pdptw.common.*;
 import com.github.rinde.rinsim.scenario.*;
 import com.github.rinde.rinsim.ui.View;
 import com.github.rinde.rinsim.ui.renderers.CommRenderer;
@@ -121,6 +121,7 @@ public class ExperimentExample {
 
                 // Adds the GUI just like it is added to a Simulator object.
                 .showGui(View.builder()
+
                         .with(GraphRoadModelRenderer.builder())
                         .with(CustomAGVRenderer.builder(CustomAGVRenderer.Language.ENGLISH))
                         .with(RoadUserRenderer.builder()
@@ -131,7 +132,7 @@ public class ExperimentExample {
                         .with(CommRenderer.builder())
                         .with(TimeLinePanel.builder())
                         .with(RouteRenderer.builder())
-                        .with(RoutePanel.builder().withPositionLeft())
+                        //.with(RoutePanel.builder().withPositionLeft())
                         .with(StatsPanel.builder())
                         .withResolution((int) RESOLUTION.x, (int) RESOLUTION.y)
                         .withAutoPlay()
