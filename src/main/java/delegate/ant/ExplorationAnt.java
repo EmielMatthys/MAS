@@ -59,7 +59,7 @@ public class ExplorationAnt extends Ant implements SimulatorUser {
             MoveProgress progress = rm.moveTo(this, destination, timeLapse);
             plan.recordMovement(progress);
         }else{
-            LIFETIME = 0;
+//            LIFETIME = 0;
         }
     }
 
@@ -84,16 +84,20 @@ public class ExplorationAnt extends Ant implements SimulatorUser {
             truck.explorationCallback(plan);
         }
         else {
-            cloneFromPheromones(feasibilityPheromones, t.getPosition());
+            boolean clonedAtleasOne = cloneFromPheromones(feasibilityPheromones, t.getPosition());
+            if(!clonedAtleasOne){
+                hops = 0;
+                return;
+            }
         }
 
         LIFETIME = 0;
         sim.unregister(this);
     }
 
-    private void cloneFromPheromones(List<FeasibilityPheromone> pheromones, Point spawnPos){
+    private boolean cloneFromPheromones(List<FeasibilityPheromone> pheromones, Point spawnPos){
         if(pheromones.isEmpty())
-            return;
+            return false;
 
         Set<Package> packages = pheromones.stream()
                 .map(FeasibilityPheromone::getSourcePackage)
@@ -109,6 +113,7 @@ public class ExplorationAnt extends Ant implements SimulatorUser {
             ExplorationAnt ant = new ExplorationAnt(spawnPos, p.getPickupLocation(), hops, truck, plan.clone());
             sim.register(ant);
         }
+        return i > 0;
     }
 
     @Override
