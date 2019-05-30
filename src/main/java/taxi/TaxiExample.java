@@ -23,6 +23,7 @@ import com.github.rinde.rinsim.core.model.road.RoadModelBuilders;
 import com.github.rinde.rinsim.core.model.time.TickListener;
 import com.github.rinde.rinsim.core.model.time.TimeLapse;
 import com.github.rinde.rinsim.event.Listener;
+import graph.GraphCreator;
 import taxi.TaxiRenderer.Language;
 import com.github.rinde.rinsim.geom.Graph;
 import com.github.rinde.rinsim.geom.MultiAttributeData;
@@ -115,7 +116,7 @@ public final class TaxiExample {
 
     // use map of leuven
     final Simulator simulator = Simulator.builder()
-      .addModel(RoadModelBuilders.staticGraph(AGVExample.GraphCreator.createTestGraph()))
+      .addModel(RoadModelBuilders.staticGraph(GraphCreator.createSmallGraph()))
       .addModel(DefaultPDPModel.builder())
       .addModel(view)
       .build();
