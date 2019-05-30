@@ -42,22 +42,26 @@ public class Package extends Parcel implements TickListener, RoadUser, Simulator
 
     @Override
     public void tick(TimeLapse timeLapse) {
-        if(getPDPModel().getParcelState(this).isPickedUp()){
-            dmasModel.unregister(this);
-        }
-
         if(getPDPModel().getParcelState(this).isDelivered()){
             sim.unregister(locationAgent);
             sim.unregister(this);
             return;
         }
 
+        if(getPDPModel().getParcelState(this).isPickedUp()){
+//            dmasModel.unregister(this);
+            return;
+        }
+
+
         if (ant_tick == FEAS_ANT_INTERVAL) {
             RoadModel rm = getRoadModel();
 
             for(int i = 0; i < FEAS_ANT_COUNT;i++){
                 FeasibilityAnt ant = new FeasibilityAnt(this, rm.getRandomPosition(sim.getRandomGenerator()));
+                FeasibilityAnt myPackAnt = new FeasibilityAnt(this, getDeliveryLocation());
                 sim.register(ant);
+                sim.register(myPackAnt);
             }
 
             ant_tick = 0;

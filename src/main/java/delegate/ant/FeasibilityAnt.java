@@ -57,41 +57,4 @@ public class FeasibilityAnt extends Ant {
 
         getDmasModel().dropPheromone(t, new FeasibilityPheromone(sourcePackage, distance.getValue(), time));
     }
-
-
 }
-
-
-/*
-if(roadModel.containsObjectAt(this, destination)){
-            LIFETIME = 0;
-            return;
-        }
-
-        Set<Package> allPackages = this.roadModel.getObjectsOfType(Package.class);
-
-        // Loop through all packages in roadmodel
-        for(Package p : allPackages){
-
-            // Skip own package
-            if(p.equals(sourcePackage))
-                continue;
-
-            Point pDest = p.getDeliveryLocation();
-            Point myPos = roadModel.getPosition(this);
-
-            // Check if on deliverylocation
-            DynamicGraphRoadModel dgrm = (DynamicGraphRoadModel) roadModel;
-            if (Point.distance(myPos, pDest) < REQUIRED_DISTANCE_MIN){
-
-                // Drop pheromone pointing to source on destination location
-                this.dmasModel.dropPheromone(new FeasibilityPheromone(sourcePackage, pDest));
-            }
-        }
-
-        if(timeLapse.hasTimeLeft()){
-            roadModel.moveTo(this, destination, timeLapse);
-        }
-
-        this.LIFETIME--;
- */
