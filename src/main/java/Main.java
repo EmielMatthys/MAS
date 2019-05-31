@@ -7,9 +7,6 @@ import simple.SimpleAgent;
 
 public class Main {
 
-    @Parameter(names = {"--test", "-t"})
-    private boolean runTests;
-
     @Parameter(names = {"--big", "-b"})
     private boolean bigMap;
 
@@ -24,14 +21,8 @@ public class Main {
 
     private void run() {
 
-        if(runTests){
-            ExperimentExample.run(false, false);
-            ExperimentExample.run(bigMap, true);
-        }
-        else
-        {
-            AGVExample.run(false, bigMap);
-            DelegateExample.run(bigMap);
-        }
+        AGVExample.run(false, bigMap);
+        DelegateExample.run(bigMap);
+
     }
 }
