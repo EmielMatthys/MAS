@@ -7,6 +7,8 @@ import com.github.rinde.rinsim.core.model.road.RoadModel;
 import com.github.rinde.rinsim.core.model.road.RoadModelBuilders;
 import com.github.rinde.rinsim.core.model.time.TickListener;
 import com.github.rinde.rinsim.core.model.time.TimeLapse;
+import com.github.rinde.rinsim.geom.Graph;
+import com.github.rinde.rinsim.geom.ListenableGraph;
 import com.github.rinde.rinsim.geom.Point;
 import com.github.rinde.rinsim.ui.View;
 import com.github.rinde.rinsim.ui.renderers.GraphRoadModelRenderer;
@@ -28,22 +30,22 @@ import java.util.Set;
 
 public class DelegateExample {
 
-    private static final int MAX_PACKAGES = 10;
-    private static final int MAX_TRUCKS = 3;
+    private static int MAX_PACKAGES = 10;
+    private static int MAX_TRUCKS = 3;
     private static final double PROB_NEW_TRUCK = 0.005;
     private static final double PROB_NEW_PACK = 0.005;
 
     public static void main(String[] args) {
-        run();
+        run(false);
     }
 
-    public static void run() {
+    public static void run(boolean bigGraph) {
         View.Builder viewBuilder = View.builder().withTitleAppendix("Delegate MAS example")
 //                .with(WarehouseRenderer.builder()
 //                        .withMargin(VEHICLE_LENGTH))
 //                .with(AGVRenderer.builder()
 //                        .withDifferentColorsForVehicles())
-                .with(GraphRoadModelRenderer.builder().withNodeCircles())
+                .with(GraphRoadModelRenderer.builder())
                 .with(RoadUserRenderer.builder()
                         .withImageAssociation(
                                 Package.class, "/graphics/perspective/deliverypackage2.png")
@@ -61,13 +63,19 @@ public class DelegateExample {
                 .with(CustomPDPRenderer.builder())
                 ;
 
+        ListenableGraph graph = GraphCreator.createSmallGraph();
+        if(bigGraph) {
+            graph = GraphCreator.createLargeGraph();
+            MAX_TRUCKS *= 3;
+            MAX_PACKAGES *=3;
+        }
 
         final Simulator sim = Simulator.builder()
                 .addModel(
-                        RoadModelBuilders.dynamicGraph(GraphCreator.createSmallGraph())
+                        RoadModelBuilders.dynamicGraph(graph)
 //                                .withCollisionAvoidance()
                                 .withDistanceUnit(SI.METER).withSpeedUnit(NonSI.KILOMETERS_PER_HOUR))
-                .addModel(viewBuilder.withAutoClose().withAutoPlay())
+                .addModel(viewBuilder.withAutoPlay())
                 .addModel(DefaultPDPModel.builder())
                 .addModel(DMASModel.builder())
                 .build();

@@ -6,7 +6,7 @@
 * Dynamic: see below
 
 ### AGV's:
-* Two main agents: package + delivery
+* Two Main agents: package + delivery
 * Delegate MASs: to implement effective delivery tactics
 
 ### Constraints and dynamism:

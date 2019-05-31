@@ -25,7 +25,8 @@ import java.lang.reflect.Array;
 import java.util.*;
 
 /**
- *
+ * Model allowing ant and pheromone functionality
+ * Some implementation tactics were inspired by https://github.com/sebakerckhof/2102sam
  */
 public class DMASModel extends AbstractModel<DMASUser> implements TickListener, SimulatorUser {
 

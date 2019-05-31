@@ -9,7 +9,6 @@ import com.github.rinde.rinsim.geom.Point;
 import com.google.common.base.Optional;
 import delegate.IPlan;
 import delegate.LocationAgent;
-import delegate.Plan;
 import delegate.agent.Package;
 import delegate.agent.Truck;
 import delegate.ant.pheromone.FeasibilityPheromone;

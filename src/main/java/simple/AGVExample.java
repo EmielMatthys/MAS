@@ -8,6 +8,7 @@ import com.github.rinde.rinsim.core.model.road.RoadModel;
 import com.github.rinde.rinsim.core.model.road.RoadModelBuilders;
 import com.github.rinde.rinsim.core.model.time.TickListener;
 import com.github.rinde.rinsim.core.model.time.TimeLapse;
+import com.github.rinde.rinsim.geom.Graph;
 import com.github.rinde.rinsim.ui.View;
 import com.github.rinde.rinsim.ui.renderers.*;
 import com.github.rinde.rinsim.util.TimeWindow;
@@ -35,7 +36,7 @@ public class AGVExample {
      * @param args - No args.
      */
     public static void main(String[] args) {
-        run(false);
+        run(false, false);
     }
 
     /**
@@ -44,7 +45,7 @@ public class AGVExample {
      *          automatically starting and stopping itself such that it can be run
      *          from a unit test.
      */
-    public static void run(boolean testing) {
+    public static void run(boolean testing, boolean bigGraph) {
         View.Builder viewBuilder = View.builder()
 //                .with(WarehouseRenderer.builder()
 //                        .withMargin(VEHICLE_LENGTH))
@@ -52,7 +53,8 @@ public class AGVExample {
 //                        .withDifferentColorsForVehicles())
                 .with(GraphRoadModelRenderer.builder())
                 .with(CustomAGVRenderer.builder(CustomAGVRenderer.Language.ENGLISH))
-                .with(CommRenderer.builder());
+                .with(CommRenderer.builder())
+                .withAutoPlay();
 
 
         if (testing) {
@@ -75,10 +77,14 @@ public class AGVExample {
             ;
         }
 
+
+        Graph graph = GraphCreator.createSmallGraph();
+        if(bigGraph)
+            graph = GraphCreator.createLargeGraph();
+
         final Simulator sim = Simulator.builder()
                 .addModel(
-                        RoadModelBuilders.staticGraph(GraphCreator.createSmallGraph())
-//                                .withCollisionAvoidance()
+                        RoadModelBuilders.staticGraph(graph)
                                 .withDistanceUnit(SI.METER).withSpeedUnit(NonSI.KILOMETERS_PER_HOUR))
                 .addModel(viewBuilder)
                 .addModel(DefaultPDPModel.builder())

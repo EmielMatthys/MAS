@@ -189,7 +189,6 @@ public class Truck extends Vehicle implements TickListener, MovingRoadUser, Simu
             RandomExplorationAnt ant = new RandomExplorationAnt(spawnLocation, p.get(), 1, this); // Random ants have one hop
             plans.clear();
             sim.register(ant);
-            LOGGER.warn("Sent out random ant!");
         }
     }
 
