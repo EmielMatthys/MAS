@@ -43,13 +43,14 @@ public class ExamplePostProcessor implements PostProcessor<String> {
 
 
             final StringBuilder sbPick = new StringBuilder();
-            sbPick.append(delT);
+            sbPick.append(pickT);
 
             writerPick.write(sbPick.toString());
             writerPick.newLine();
 
             final StringBuilder sbDel = new StringBuilder();
-            sbDel.append(pickT);
+            sbDel.append(delT);
+            writerDel.write(sbDel.toString());
             writerDel.newLine();
 
 
