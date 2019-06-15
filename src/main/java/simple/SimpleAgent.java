@@ -218,7 +218,11 @@ public class SimpleAgent extends Vehicle implements TickListener, MovingRoadUser
 
     @Override
     public Optional<Point> getPosition() {
-        return Optional.of(getRoadModel().getPosition(this));
+        try {
+            return Optional.of(getRoadModel().getPosition(this));
+        }catch(IllegalArgumentException e){
+            return Optional.absent();
+        }
     }
 
     @Override
