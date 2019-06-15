@@ -33,6 +33,7 @@ import javax.measure.unit.SI;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Random;
 
 import static com.google.common.base.Preconditions.checkArgument;
 
@@ -48,7 +49,7 @@ public class ExperimentExample {
      */
 
     private static final int VEHICLE_CAPACITY = 1;
-    private static final double VEHICLE_SPEED = 0.2;
+    private static final double VEHICLE_SPEED = 1000d;
     private static final int NUM_AGVS = 5;
     private static final int NUM_PACKAGES = 20;
 
@@ -61,6 +62,8 @@ public class ExperimentExample {
     private static final long M60 = 60 * 60 * 1000L;
 
     private static RoadModel rm;
+
+    static Random rnd = new Random();
 
     private ExperimentExample() {}
 
@@ -78,17 +81,17 @@ public class ExperimentExample {
             list.remove(index);
             arguments = list.toArray(new String[] {});
         }
-        final Optional<ExperimentResults> results;
+        Optional<ExperimentResults> results; // = Optional.absent();
         // Starts the experiment builder.
-        results = Experiment.builder()
+        Experiment.Builder exp = Experiment.builder()
                 .addConfiguration(MASConfiguration.builder()
                         //Choose one of two
-                        //.addEventHandler(AddParcelEvent.class, SimplePackageHandler.INSTANCE)
-                        .addEventHandler(AddParcelEvent.class, DelegatePackageHandler.INSTANCE)
+                        .addEventHandler(AddParcelEvent.class, SimplePackageHandler.INSTANCE)
+                        //.addEventHandler(AddParcelEvent.class, DelegatePackageHandler.INSTANCE)
 
                         //Choose one of two
-                        //.addEventHandler(AddVehicleEvent.class, SimpleAgentHandler.INSTANCE)
-                        .addEventHandler(AddVehicleEvent.class, DelegateTruckHandler.INSTANCE)
+                        .addEventHandler(AddVehicleEvent.class, SimpleAgentHandler.INSTANCE)
+                        //.addEventHandler(AddVehicleEvent.class, DelegateTruckHandler.INSTANCE)
 
 
                         .addEventHandler(TimeOutEvent.class, TimeOutEvent.ignoreHandler())
@@ -97,8 +100,8 @@ public class ExperimentExample {
                         .addModel(StatsTracker.builder())
 
                         //Comment out if you want to run simple
-                        .addModel(DMASModel.builder())
-                        .addModel(CustomPDPRenderer.builder())
+                        //.addModel(DMASModel.builder())
+                        //.addModel(CustomPDPRenderer.builder())
 
                         .build())
 
@@ -109,11 +112,11 @@ public class ExperimentExample {
 
                 // The number of repetitions for each simulation. Each repetition will
                 // have a unique random seed that is given to the simulator.
-                .repeat(2)
+                .repeat(1)
 
                 // The master random seed from which all random seeds for the
                 // simulations will be drawn.
-                .withRandomSeed(0)
+                .withRandomSeed(1)
 
                 // The number of threads the experiment will use, this allows to run
                 // several simulations in parallel. Note that when the GUI is used the
@@ -134,9 +137,9 @@ public class ExperimentExample {
                         .with(CustomAGVRenderer.builder(CustomAGVRenderer.Language.ENGLISH))
                         .with(RoadUserRenderer.builder()
                                 .withImageAssociation(
-                                        delegate.agent.Package.class, "/graphics/perspective/deliverypackage2.png")
+                                        simple.Package.class, "/graphics/perspective/deliverypackage2.png")
                                 .withImageAssociation(
-                                        Truck.class, "/graphics/flat/flatbed-truck-32.png"))
+                                        simple.SimpleAgent.class, "/graphics/flat/flatbed-truck-32.png"))
                         .with(CommRenderer.builder())
                         .with(TimeLinePanel.builder())
                         .with(RouteRenderer.builder())
@@ -147,20 +150,41 @@ public class ExperimentExample {
                         .withAutoClose()
                         // For testing we allow to change the speed up via the args.
                         .withSpeedUp(uiSpeedUp)
-                        .withTitleAppendix("Experiment example"))
-                .perform(System.out, arguments);
+                        .withTitleAppendix("Experiment example"));
+                //.perform(System.out, arguments);
 
-        if (results.isPresent()) {
-            for (final Experiment.SimulationResult sr : results.get().getResults()) {
-                // The SimulationResult contains all information about a specific
-                // simulation, the result object is the object created by the post
-                // processor, a String in this case.
-                System.out.println(
-                        sr.getSimArgs().getRandomSeed() + " " + sr.getResultObject());
+//        if (results.isPresent()) {
+//            for (final Experiment.SimulationResult sr : results.get().getResults()) {
+//                // The SimulationResult contains all information about a specific
+//                // simulation, the result object is the object created by the post
+//                // processor, a String in this case.
+//                System.out.println(
+//                        sr.getSimArgs().getRandomSeed() + " " + sr.getResultObject());
+//            }
+//        } else {
+//            throw new IllegalStateException("Experiment did not complete.");
+//        }
+
+        for (int k = 0; k < 20; k++) {
+            try {
+                results = exp.perform(System.out, arguments);
+            } catch (Exception e) {
+                System.out.println("FAILED, TRYING AGAIN");
+                k--;
+                results = Optional.absent();
             }
-        } else {
-            throw new IllegalStateException("Experiment did not complete.");
+            if (results.isPresent()) {
+                for (final Experiment.SimulationResult sr : results.get().getResults()) {
+                    // The SimulationResult contains all information about a specific
+                    // simulation, the result object is the object created by the post
+                    // processor, a String in this case.
+                    System.out.println(
+                            sr.getSimArgs().getRandomSeed() + " " + sr.getResultObject());
+                }
+            }
         }
+
+
 
     }
 
@@ -222,11 +246,12 @@ public class ExperimentExample {
             public void handleTimedEvent(AddParcelEvent event, SimulatorAPI sim) {
 
                 RandomGenerator rng = sim.getRandomGenerator();
+
                 ListenableGraph graph = GraphCreator.createSmallGraph();
 
                 Package p = new Package(event.getParcelDTO());
-
-
+                int point = rnd.nextInt(50);
+                for (int i = 0; i < point; i++) rng.nextInt();
 
                 ParcelDTO builder = Parcel.builder(graph.getRandomNode(rng), graph.getRandomNode(rng))
                         .neededCapacity(0)
