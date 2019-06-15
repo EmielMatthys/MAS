@@ -36,9 +36,9 @@ public class ExamplePostProcessor implements PostProcessor<String> {
 
         try {
 
-            FileWriter fwPick = new FileWriter("pickuptimes_" + NUM_AGVS + ".txt", true);
+            FileWriter fwPick = new FileWriter("pickuptimes_LARGESIMPLE_14.txt", true);
             BufferedWriter writerPick = new BufferedWriter(fwPick);
-            FileWriter fwDel = new FileWriter("deliverytimes_" + NUM_AGVS +".txt", true);
+            FileWriter fwDel = new FileWriter("deliverytimes_LARGESIMPLE_14.txt", true);
             BufferedWriter writerDel = new BufferedWriter(fwDel);
 
 

@@ -50,8 +50,8 @@ public class ExperimentExample {
 
     private static final int VEHICLE_CAPACITY = 1;
     private static final double VEHICLE_SPEED = 1000d;
-    private static final int NUM_AGVS = 5;
-    private static final int NUM_PACKAGES = 20;
+    private static final int NUM_AGVS = 12;
+    private static final int NUM_PACKAGES = 48;
 
     private static final Point RESOLUTION = new Point(700, 600);
 
@@ -165,7 +165,7 @@ public class ExperimentExample {
 //            throw new IllegalStateException("Experiment did not complete.");
 //        }
 
-        for (int k = 0; k < 20; k++) {
+        for (int k = 0; k < 15; k++) {
             try {
                 results = exp.perform(System.out, arguments);
             } catch (Exception e) {
@@ -293,7 +293,8 @@ public class ExperimentExample {
 
                 delegate.agent.Package p = new delegate.agent.Package(event.getParcelDTO());
 
-
+                int point = rnd.nextInt(50);
+                for (int i = 0; i < point; i++) rng.nextInt();
 
                 ParcelDTO builder = Parcel.builder(graph.getRandomNode(rng), graph.getRandomNode(rng))
                         .neededCapacity(0)
