@@ -151,6 +151,8 @@ public class Truck extends Vehicle implements TickListener, MovingRoadUser, Simu
                 rm.followPath(this, currentPlan.getPath(), timeLapse);
             }catch (IllegalArgumentException e){
                 currentPlan.getPath().poll();
+                if(currentPlan.getPath().isEmpty())
+                    rm.moveTo(this, nextP, timeLapse);
             }
         }
     }
@@ -223,6 +225,10 @@ public class Truck extends Vehicle implements TickListener, MovingRoadUser, Simu
     public void explorationCallback(IPlan plan) {
         if(plan instanceof EmptyPlan)
             return;
+
+        if(plan.getPath().isEmpty()){
+            LOGGER.warn("LEEG PAD");
+        }
 
         plans.add((NormalPlan) plan);
     }
